@@ -16,6 +16,10 @@
 #include "core/hle/service/am/am.h"
 #include "ui_main.h"
 
+namespace Common {
+struct CrashInformation;
+}
+
 class AboutDialog;
 class Config;
 class ClickableLabel;
@@ -184,6 +188,7 @@ private slots:
     void OnPlayMovie();
     void OnStopRecordingPlayback();
     void OnCaptureScreenshot();
+    void OnCrashed(const Common::CrashInformation&);
     void OnCoreError(Core::System::ResultStatus, std::string);
     /// Called whenever a user selects Help->About Citra
     void OnMenuAboutCitra();

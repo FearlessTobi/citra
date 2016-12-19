@@ -3,6 +3,7 @@
 // Refer to the license.txt file included.
 
 #include <clocale>
+#include <cstdlib>
 #include <memory>
 #include <thread>
 #include <glad/glad.h>
@@ -45,6 +46,7 @@
 #include "citra_qt/updater/updater.h"
 #include "citra_qt/util/clickable_label.h"
 #include "common/common_paths.h"
+#include "common/crash_handler.h"
 #include "common/detached_tasks.h"
 #include "common/file_util.h"
 #include "common/logging/backend.h"
@@ -832,6 +834,7 @@ void GMainWindow::BootGame(const QString& filename) {
     emu_thread->start();
 
     connect(render_window, &GRenderWindow::Closed, this, &GMainWindow::OnStopGame);
+    connect(emu_thread.get(), &EmuThread::Crashed, this, &GMainWindow::OnCrashed);
     // BlockingQueuedConnection is important here, it makes sure we've finished refreshing our views
     // before the CPU continues
     connect(emu_thread.get(), &EmuThread::DebugModeEntered, registersWidget,
@@ -1609,6 +1612,16 @@ void GMainWindow::UpdateStatusBar() {
     emu_speed_label->setVisible(true);
     game_fps_label->setVisible(true);
     emu_frametime_label->setVisible(true);
+}
+
+void GMainWindow::OnCrashed(const Common::CrashInformation& crash_info) {
+    QString message = tr("Citra has crashed. Crash information follows:\n");
+    for (const auto& line : crash_info.stack_trace) {
+        message += QString::fromStdString(line);
+        message += '\n';
+    }
+    QMessageBox::critical(this, tr("Citra"), message);
+    QCoreApplication::exit(EXIT_FAILURE);
 }
 
 void GMainWindow::OnCoreError(Core::System::ResultStatus result, std::string details) {
