@@ -571,7 +571,9 @@ void GMainWindow::BootGame(const QString& filename) {
     render_window->setFocus();
 
     emulation_running = true;
-    ToggleFullscreen();
+    if (ui.action_Fullscreen->isChecked()) {
+        ShowFullscreen();
+    }
     OnStartGame();
 }
 
@@ -745,21 +747,36 @@ void GMainWindow::ToggleFullscreen() {
         return;
     }
     if (ui.action_Fullscreen->isChecked()) {
-        if (ui.action_Single_Window_Mode->isChecked()) {
-            ui.menubar->hide();
-            statusBar()->hide();
-            showFullScreen();
-        } else {
-            render_window->showFullScreen();
-        }
-    } else {
-        if (ui.action_Single_Window_Mode->isChecked()) {
-            statusBar()->setVisible(ui.action_Show_Status_Bar->isChecked());
-            ui.menubar->show();
-            showNormal();
-        } else {
-            render_window->showNormal();
-        }
+        ShowFullscreen();
+    }
+    else {
+        HideFullscreen();
+    }
+}
+
+void GMainWindow::ShowFullscreen() {
+    if (ui.action_Single_Window_Mode->isChecked()) {
+        UISettings::values.geometry = saveGeometry();
+        ui.menubar->hide();
+        statusBar()->hide();
+        showFullScreen();
+    }
+    else {
+        UISettings::values.renderwindow_geometry = render_window->saveGeometry();
+        render_window->showFullScreen();
+    }
+}
+
+void GMainWindow::HideFullscreen() {
+    if (ui.action_Single_Window_Mode->isChecked()) {
+        statusBar()->setVisible(ui.action_Show_Status_Bar->isChecked());
+        ui.menubar->show();
+        showNormal();
+        restoreGeometry(UISettings::values.geometry);
+    }
+    else {
+        render_window->showNormal();
+        render_window->restoreGeometry(UISettings::values.renderwindow_geometry);
     }
 }
 
