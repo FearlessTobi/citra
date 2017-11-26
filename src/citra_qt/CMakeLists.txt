@@ -53,6 +53,8 @@ add_executable(citra-qt
     configuration/configure_ui.h
     configuration/configure_web.cpp
     configuration/configure_web.h
+    crash_dialog/crash_dialog.cpp
+    crash_dialog/crash_dialog.h
     debugger/console.h
     debugger/console.cpp
     debugger/graphics/graphics.cpp
@@ -136,6 +138,7 @@ set(UIS
     configuration/configure_system.ui
     configuration/configure_ui.ui
     configuration/configure_web.ui
+    crash_dialog/crash_dialog.ui
     debugger/registers.ui
     multiplayer/direct_connect.ui
     multiplayer/lobby.ui
