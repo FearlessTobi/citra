@@ -50,6 +50,9 @@ void GetCecInfoEventHandle(Service::Interface* self);
  */
 void GetChangeStateEventHandle(Service::Interface* self);
 
+    //TODO: Documentation
+void OpenAndRead(Service::Interface* self);
+
 /// Initialize CECD service(s)
 void Init();
 
