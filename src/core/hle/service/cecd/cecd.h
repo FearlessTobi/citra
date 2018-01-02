@@ -50,7 +50,23 @@ void GetCecInfoEventHandle(Service::Interface* self);
  */
 void GetChangeStateEventHandle(Service::Interface* self);
 
-    //TODO: Documentation
+/**
+* OpenAndRead service function
+*  Inputs:
+*      1: Buffer size (unused)
+*      2: NCCH Program ID
+*      3: Path type
+*      4: File open flag?
+*      5: Descriptor for process ID
+*      6: Placeholder for process ID
+*      7: Descriptor for mapping a write-only buffer in the target process
+*      8: Buffer address
+*  Outputs:
+*      1: ResultCode
+*      2: Total bytes read
+*      3: Descriptor for mapping a write-only buffer in the target process
+*      4: Buffer address
+*/
 void OpenAndRead(Service::Interface* self);
 
 /// Initialize CECD service(s)
