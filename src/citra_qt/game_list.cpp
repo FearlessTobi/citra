@@ -163,25 +163,25 @@ QString GameList::GetReadableCompatibility(QString compat) {
     int c = compat.toInt();
     switch (c) {
     case 0:
-        return QString("Perfect"); //TODO: tr
+        return tr("Perfect");
         break;
     case 1:
-        return QString("Great");
+        return tr("Great");
         break;
     case 2:
-        return QString("Okay");
+        return tr("Okay");
         break;
     case 3:
-        return QString("Bad");
+        return tr("Bad");
         break;
     case 4:
-        return QString("Intro/Menu");
+        return tr("Intro/Menu");
         break;
     case 5:
-        return QString("Won't Boot");
+        return tr("Won't Boot");
         break;
     default:
-        return QString("Not Tested");
+        return tr("Not Tested");
         break;
 
     }
