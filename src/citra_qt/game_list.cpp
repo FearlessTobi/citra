@@ -163,7 +163,7 @@ QString GameList::GetReadableCompatibility(QString compat) {
     int c = compat.toInt();
     switch (c) {
     case 0:
-        return tr("Perfect");
+        return tr("Perfect"); //TODO: Tooltips, Colors
         break;
     case 1:
         return tr("Great");

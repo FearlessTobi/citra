@@ -7,6 +7,7 @@
 #include <QString>
 #include <QWidget>
 #include "common/common_types.h"
+#include <QPainter>
 
 class GameListWorker;
 class GMainWindow;
@@ -102,4 +103,16 @@ private:
     GameListWorker* current_worker = nullptr;
     QFileSystemWatcher* watcher = nullptr;
     std::vector<std::pair<std::string, QString>> compatibility_list;
+};
+
+class compat_pixmap : public QPixmap {
+public:
+    compat_pixmap(const QColor& color) : QPixmap(16, 16) {
+        fill(Qt::transparent);
+
+        QPainter painter(this);
+        painter.setPen(color);
+        painter.setBrush(color);
+        painter.drawEllipse(0, 0, 15, 15);
+    }
 };
