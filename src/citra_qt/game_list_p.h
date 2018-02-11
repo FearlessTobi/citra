@@ -152,8 +152,10 @@ class GameListWorker : public QObject, public QRunnable {
     Q_OBJECT
 
 public:
-    GameListWorker(QString dir_path, bool deep_scan)
-        : QObject(), QRunnable(), dir_path(dir_path), deep_scan(deep_scan) {}
+    GameListWorker(QString dir_path, bool deep_scan,
+        std::vector<std::pair<std::string, QString>> compatibility_list)
+         : QObject(), QRunnable(), dir_path(dir_path), deep_scan(deep_scan),
+        compatibility_list(compatibility_list) {}
 
 public slots:
     /// Starts the processing of directory tree information.
@@ -179,6 +181,7 @@ private:
     QStringList watch_list;
     QString dir_path;
     bool deep_scan;
+    std::vector<std::pair<std::string, QString>> compatibility_list;
     std::atomic_bool stop_processing;
 
     void AddFstEntriesToGameList(const std::string& dir_path, unsigned int recursion = 0);

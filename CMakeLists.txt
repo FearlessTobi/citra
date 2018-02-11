@@ -7,11 +7,11 @@ include(DownloadExternals)
 project(citra)
 
 option(ENABLE_SDL2 "Enable the SDL2 frontend" ON)
-option(CITRA_USE_BUNDLED_SDL2 "Download bundled SDL2 binaries" OFF)
+option(CITRA_USE_BUNDLED_SDL2 "Download bundled SDL2 binaries" ON)
 
 option(ENABLE_QT "Enable the Qt frontend" ON)
 option(ENABLE_QT_TRANSLATION "Enable translations for the Qt frontend" OFF)
-option(CITRA_USE_BUNDLED_QT "Download bundled Qt binaries" OFF)
+option(CITRA_USE_BUNDLED_QT "Download bundled Qt binaries" ON)
 
 option(ENABLE_WEB_SERVICE "Enable web services (telemetry, etc.)" ON)
 option(CITRA_USE_BUNDLED_CURL "FOR MINGW ONLY: Download curl configured against winssl instead of openssl" OFF)
@@ -46,6 +46,18 @@ function(check_submodules_present)
     endforeach()
 endfunction()
 check_submodules_present()
+
+
+configure_file(${CMAKE_SOURCE_DIR}/dist/compatibility_list/compatibility_list.qrc
+               ${CMAKE_BINARY_DIR}/dist/compatibility_list/compatibility_list.qrc
+               COPYONLY)
+
+if (NOT EXISTS ${CMAKE_BINARY_DIR}/dist/compatibility_list/compatibility_list.json)
+    message(STATUS "Downloading compatibility list for citra...")
+    file(DOWNLOAD
+        https://citra-emu.org/game/index.json
+        "${CMAKE_BINARY_DIR}/dist/compatibility_list/compatibility_list.json" SHOW_PROGRESS)
+endif()
 
 # Detect current compilation architecture and create standard definitions
 # =======================================================================

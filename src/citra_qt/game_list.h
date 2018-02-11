@@ -27,6 +27,7 @@ class GameList : public QWidget {
 public:
     enum {
         COLUMN_NAME,
+        COLUMN_COMPATIBILITY,
         COLUMN_FILE_TYPE,
         COLUMN_SIZE,
         COLUMN_COUNT, // Number of columns
@@ -66,6 +67,7 @@ public:
     void setFilterFocus();
     void setFilterVisible(bool visibility);
 
+    void LoadCompatibilityList();
     void PopulateAsync(const QString& dir_path, bool deep_scan);
 
     void SaveInterfaceLayout();
@@ -83,6 +85,7 @@ private slots:
     void onFilterCloseClicked();
 
 private:
+    QString GetReadableCompatibility(QString compat);
     void AddEntry(const QList<QStandardItem*>& entry_items);
     void ValidateEntry(const QModelIndex& item);
     void DonePopulating(QStringList watch_list);
@@ -98,4 +101,5 @@ private:
     QStandardItemModel* item_model = nullptr;
     GameListWorker* current_worker = nullptr;
     QFileSystemWatcher* watcher = nullptr;
+    std::vector<std::pair<std::string, QString>> compatibility_list;
 };
