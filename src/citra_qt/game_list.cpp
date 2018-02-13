@@ -159,34 +159,6 @@ bool GameList::containsAllWords(QString haystack, QString userinput) {
                        [haystack](QString s) { return haystack.contains(s); });
 }
 
-QString GameList::GetReadableCompatibility(QString compat) {
-    int c = compat.toInt();
-    switch (c) {
-    case 0:
-        return tr("Perfect"); //TODO: Tooltips, Colors
-        break;
-    case 1:
-        return tr("Great");
-        break;
-    case 2:
-        return tr("Okay");
-        break;
-    case 3:
-        return tr("Bad");
-        break;
-    case 4:
-        return tr("Intro/Menu");
-        break;
-    case 5:
-        return tr("Won't Boot");
-        break;
-    default:
-        return tr("Not Tested");
-        break;
-
-    }
-}
-
 // Event in order to filter the gamelist after editing the searchfield
 void GameList::onTextChanged(const QString& newText) {
     int rowCount = tree_view->model()->rowCount();
@@ -370,7 +342,7 @@ void GameList::LoadCompatibilityList() {
         QStringList game_ids = list.keys();
         for (QString id : game_ids) {
             QJsonObject game = list[id].toObject();
-            QString compatibility = GetReadableCompatibility(game["compatibility"].toString());
+            QString compatibility = game["compatibility"].toString();
             compatibility_list.push_back(std::make_pair(id.toUpper().toStdString(), compatibility));
         }
     }
@@ -462,13 +434,13 @@ void GameListWorker::AddFstEntriesToGameList(const std::string& dir_path, unsign
                 return element.first == pid;
                 });
 
-                QString compatibility("Not Tested");
+                QString compatibility("99");
             if (it != compatibility_list.end())
                  compatibility = it->second;
 
             emit EntryReady({
                 new GameListItemPath(QString::fromStdString(physical_name), smdh, program_id),
-                new GameListItem(compatibility),
+                new GameListItemCompat(compatibility),
                 new GameListItem(
                     QString::fromStdString(Loader::GetFileTypeString(loader->GetFileType()))),
                 new GameListItemSize(FileUtil::GetSize(physical_name)),

@@ -86,7 +86,6 @@ private slots:
     void onFilterCloseClicked();
 
 private:
-    QString GetReadableCompatibility(QString compat);
     void AddEntry(const QList<QStandardItem*>& entry_items);
     void ValidateEntry(const QModelIndex& item);
     void DonePopulating(QStringList watch_list);

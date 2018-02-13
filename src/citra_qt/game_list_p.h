@@ -9,6 +9,7 @@
 #include <QRunnable>
 #include <QStandardItem>
 #include <QString>
+#include <QObject>
 #include "citra_qt/util/util.h"
 #include "common/string_util.h"
 #include "core/loader/smdh.h"
@@ -105,6 +106,47 @@ public:
             return GameListItem::data(role);
         }
     }
+};
+
+class GameListItemCompat : public GameListItem {
+
+public:
+    QString compatiblity;
+    GameListItemCompat() : GameListItem() {}
+    GameListItemCompat(const QString compatiblity) : GameListItem() {
+        this->compatiblity = compatiblity;
+        Compat_Status status = status_data.find(compatiblity)->second;
+        setText(status.text);
+        setToolTip(status.tooltip);
+        setData(compat_pixmap(status.color), Qt::DecorationRole);
+    }
+
+    /**
+    * This operator is, in practice, only used by the TreeView sorting systems.
+    * Override it so that it will correctly sort by numerical value instead of by string
+    * representation.
+    */
+    bool operator<(const QStandardItem& other) const override {
+        return compatiblity.toInt() < other.text().toInt(); //TODO: Correct this
+    }
+
+private:
+    struct Compat_Status {
+        QString color;
+        QString text;
+        QString tooltip;
+    };
+
+    const std::map<QString, Compat_Status> status_data = {
+        { "0",{ "#5c93ed", QObject::tr("Perfect"), QObject::tr("Game functions flawless with no audio or graphical glitches, all tested functionality works as intended without\nany workarounds needed.") } },
+        { "1",{ "#47d35c", QObject::tr("Great"),     QObject::tr("Game functions with minor graphical or audio glitches and is playable from start to finish. May require some\nworkarounds.") } },
+        { "2",{ "#94b242", QObject::tr("Okay"),       QObject::tr("Game functions with major graphical or audio glitches, but game is playable from start to finish with\nworkarounds.") } },
+        { "3",{ "#f2d624", QObject::tr("Bad"), QObject::tr("Game functions, but with major graphical or audio glitches. Unable to progress in specific areas due to glitches\neven with workarounds.") } },
+        { "4",{ "#FF0000", QObject::tr("Intro/Menu"),   QObject::tr("Game is completely unplayable due to major graphical or audio glitches. Unable to progress past the Start\nScreen.") } },
+        { "5",{ "#828282", QObject::tr("Won't Boot"),  QObject::tr("The game crashes when attempting to startup.") } },
+        { "99",{ "#000000", QObject::tr("Not Tested"),   QObject::tr("The game has not yet been tested.") } },
+    };
+
 };
 
 /**
