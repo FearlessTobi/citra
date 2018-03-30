@@ -40,6 +40,22 @@ function(check_submodules_present)
 endfunction()
 check_submodules_present()
 
+
+configure_file(${CMAKE_SOURCE_DIR}/dist/compatibility_list/compatibility_list.qrc
+               ${CMAKE_BINARY_DIR}/dist/compatibility_list/compatibility_list.qrc
+               COPYONLY)
+
+if (CI AND NOT EXISTS ${CMAKE_BINARY_DIR}/dist/compatibility_list/compatibility_list.json)
+    message(STATUS "Downloading compatibility list for citra...")
+    file(DOWNLOAD
+        https://citra-emu.org/game/index.json
+        "${CMAKE_BINARY_DIR}/dist/compatibility_list/compatibility_list.json" SHOW_PROGRESS)
+endif()
+
+if (NOT EXISTS ${CMAKE_BINARY_DIR}/dist/compatibility_list/compatibility_list.json)
+    file(WRITE ${CMAKE_BINARY_DIR}/dist/compatibility_list/compatibility_list.json "")
+endif()
+
 # Detect current compilation architecture and create standard definitions
 # =======================================================================
 

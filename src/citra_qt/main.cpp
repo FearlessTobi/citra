@@ -128,6 +128,7 @@ GMainWindow::GMainWindow() : config(new Config()), emu_thread(nullptr) {
 
     show();
 
+    game_list->LoadCompatibilityList();
     game_list->PopulateAsync(UISettings::values.gamedir, UISettings::values.gamedir_deepscan);
 
     default_theme_paths = QIcon::themeSearchPaths();
