@@ -8,7 +8,6 @@
 #include <QThread>
 #include "core/frontend/emu_window.h"
 #include "core/frontend/framebuffer.h"
-#include "core/frontend/motion_emu.h"
 
 class GRenderWindow;
 

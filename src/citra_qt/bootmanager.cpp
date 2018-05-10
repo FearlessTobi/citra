@@ -13,7 +13,6 @@
 #include "common/string_util.h"
 #include "core/3ds.h"
 #include "core/core.h"
-#include "core/frontend/motion_emu.h"
 #include "core/settings.h"
 #include "input_common/keyboard.h"
 #include "input_common/main.h"
