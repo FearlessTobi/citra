@@ -7,8 +7,8 @@
 #include <atomic>
 #include <condition_variable>
 #include <mutex>
-#include <QGLWidget>
 #include <QThread>
+#include <QWidget>
 #include "common/thread.h"
 #include "core/core.h"
 #include "core/frontend/emu_window.h"
@@ -19,6 +19,10 @@ class QScreen;
 class GGLWidgetInternal;
 class GMainWindow;
 class GRenderWindow;
+
+namespace Motion {
+class MotionEmu;
+}
 
 class EmuThread : public QThread {
     Q_OBJECT
@@ -108,55 +112,51 @@ public:
     GRenderWindow(QWidget* parent, EmuThread* emu_thread);
     ~GRenderWindow();
 
-    // EmuWindow implementation
-    void SwapBuffers() override;
-    void MakeCurrent() override;
-    void DoneCurrent() override;
-    void PollEvents() override;
-
     void BackupGeometry();
     void RestoreGeometry();
     void restoreGeometry(const QByteArray& geometry); // overridden
     QByteArray saveGeometry();                        // overridden
 
-    qreal windowPixelRatio();
-
     void closeEvent(QCloseEvent* event) override;
 
-    void keyPressEvent(QKeyEvent* event) override;
-    void keyReleaseEvent(QKeyEvent* event) override;
+    void ShowFrames();
 
-    void mousePressEvent(QMouseEvent* event) override;
-    void mouseMoveEvent(QMouseEvent* event) override;
-    void mouseReleaseEvent(QMouseEvent* event) override;
+    /**
+     * Overriden to return the context to the gui thread breifly to draw the frame
+     */
+    void SwapBuffers();
 
-    void focusOutEvent(QFocusEvent* event) override;
+    /// Polls window events aka do nothing
+    void PollEvents();
 
-    void OnClientAreaResized(unsigned width, unsigned height);
+    void MoveContext();
 
-    void InitRenderTarget();
+    Framebuffer* GetDefaultScreen();
 
 public slots:
-    void moveContext(); // overridden
+    void FrameFinished();
 
     void OnEmulationStarting(EmuThread* emu_thread);
     void OnEmulationStopping();
-    void OnFramebufferSizeChanged();
 
 signals:
     /// Emitted when the window is closed
     void Closed();
 
-private:
-    void OnMinimalClientAreaChangeRequest(
-        const std::pair<unsigned, unsigned>& minimal_size) override;
+protected:
+    void showEvent(QShowEvent* event) override;
 
-    GGLWidgetInternal* child;
+private:
+    /// Create the screens from the values in the settings
+    void UpdateScreensFromSettings();
 
     QByteArray geometry;
 
     EmuThread* emu_thread;
 
-protected:
-    void showEvent(QShowEvent* event) override;
+    QOpenGLContext* render_context;
+
+    std::atomic<bool> frame_finished;
+    std::mutex frame_drawing_mutex;
+    std::condition_variable frame_drawing_cv;
 };

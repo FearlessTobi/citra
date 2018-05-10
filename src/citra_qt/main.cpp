@@ -11,6 +11,7 @@
 #include <QFileDialog>
 #include <QFutureWatcher>
 #include <QMessageBox>
+#include <QOpenGLWidget>
 #include <QtConcurrent/QtConcurrentRun>
 #include <QtGui>
 #include <QtWidgets>
@@ -316,8 +317,6 @@ void GMainWindow::InitializeHotkeys() {
             &GMainWindow::OnMenuLoadFile);
     connect(GetHotkey("Main Window", "Start Emulation", this), &QShortcut::activated, this,
             &GMainWindow::OnStartGame);
-    connect(GetHotkey("Main Window", "Swap Screens", render_window), &QShortcut::activated,
-            ui.action_Screen_Layout_Swap_Screens, &QAction::trigger);
     connect(GetHotkey("Main Window", "Toggle Screen Layout", render_window), &QShortcut::activated,
             this, &GMainWindow::ToggleScreenLayout);
     connect(GetHotkey("Main Window", "Fullscreen", render_window), &QShortcut::activated,
@@ -565,9 +564,6 @@ bool GMainWindow::LoadROM(const QString& filename) {
     if (emu_thread != nullptr)
         ShutdownGame();
 
-    render_window->InitRenderTarget();
-    render_window->MakeCurrent();
-
     if (!gladLoadGL()) {
         QMessageBox::critical(this, tr("Error while initializing OpenGL 3.3 Core!"),
                               tr("Your GPU may not support OpenGL 3.3, or you do not "
@@ -642,13 +638,22 @@ void GMainWindow::BootGame(const QString& filename) {
     NGLOG_INFO(Frontend, "Citra starting...");
     StoreRecentFile(filename); // Put the filename on top of the list
 
+    if (ui.action_Single_Window_Mode->isChecked()) {
+        game_list->hide();
+    }
+    status_bar_update_timer.start(2000);
+
+    render_window->ShowFrames();
+    // render_window->show();
+    render_window->setFocus();
+
     if (!LoadROM(filename))
         return;
 
     // Create and start the emulation thread
     emu_thread = std::make_unique<EmuThread>(render_window);
     emit EmulationStarting(emu_thread.get());
-    render_window->moveContext();
+    render_window->MoveContext();
     emu_thread->start();
 
     connect(render_window, &GRenderWindow::Closed, this, &GMainWindow::OnStopGame);
@@ -665,13 +670,6 @@ void GMainWindow::BootGame(const QString& filename) {
 
     // Update the GUI
     registersWidget->OnDebugModeEntered();
-    if (ui.action_Single_Window_Mode->isChecked()) {
-        game_list->hide();
-    }
-    status_bar_update_timer.start(2000);
-
-    render_window->show();
-    render_window->setFocus();
 
     emulation_running = true;
     if (ui.action_Fullscreen->isChecked()) {
@@ -985,28 +983,28 @@ void GMainWindow::HideFullscreen() {
 }
 
 void GMainWindow::ToggleWindowMode() {
-    if (ui.action_Single_Window_Mode->isChecked()) {
-        // Render in the main window...
-        render_window->BackupGeometry();
-        ui.horizontalLayout->addWidget(render_window);
-        render_window->setFocusPolicy(Qt::ClickFocus);
-        if (emulation_running) {
-            render_window->setVisible(true);
-            render_window->setFocus();
-            game_list->hide();
-        }
-
-    } else {
-        // Render in a separate window...
-        ui.horizontalLayout->removeWidget(render_window);
-        render_window->setParent(nullptr);
-        render_window->setFocusPolicy(Qt::NoFocus);
-        if (emulation_running) {
-            render_window->setVisible(true);
-            render_window->RestoreGeometry();
-            game_list->show();
-        }
-    }
+    // if (ui.action_Single_Window_Mode->isChecked()) {
+    //    // Render in the main window...
+    //    render_window->BackupGeometry();
+    //    ui.horizontalLayout->addWidget(render_window);
+    //    render_window->setFocusPolicy(Qt::ClickFocus);
+    //    if (emulation_running) {
+    //        render_window->setVisible(true);
+    //        render_window->setFocus();
+    //        game_list->hide();
+    //    }
+    //
+    // } else {
+    //    // Render in a separate window...
+    //    ui.horizontalLayout->removeWidget(render_window);
+    //    render_window->setParent(nullptr);
+    //    render_window->setFocusPolicy(Qt::NoFocus);
+    //    if (emulation_running) {
+    //        render_window->setVisible(true);
+    //        render_window->RestoreGeometry();
+    //        game_list->show();
+    //    }
+    // }
 }
 
 void GMainWindow::ChangeScreenLayout() {
@@ -1046,11 +1044,6 @@ void GMainWindow::ToggleScreenLayout() {
 
     Settings::values.layout_option = new_layout;
     SyncMenuUISettings();
-    Settings::Apply();
-}
-
-void GMainWindow::OnSwapScreens() {
-    Settings::values.swap_screen = ui.action_Screen_Layout_Swap_Screens->isChecked();
     Settings::Apply();
 }
 
@@ -1347,6 +1340,14 @@ int main(int argc, char* argv[]) {
     QCoreApplication::setOrganizationName("Citra team");
     QCoreApplication::setApplicationName("Citra");
 
+    QSurfaceFormat fmt;
+    fmt.setVersion(3, 3);
+    fmt.setProfile(QSurfaceFormat::CoreProfile);
+    fmt.setSwapInterval(Settings::values.use_vsync);
+    // fmt.setOption(QGL::NoDeprecatedFunctions);
+    QSurfaceFormat::setDefaultFormat(fmt);
+
+    QApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
     QApplication::setAttribute(Qt::AA_X11InitThreads);
     QApplication app(argc, argv);
 

@@ -76,9 +76,10 @@ constexpr auto RangeFromInterval(Map& map, const Interval& interval) {
 }
 
 static u16 GetResolutionScaleFactor() {
-    return !Settings::values.resolution_factor
-               ? VideoCore::g_emu_window->GetFramebufferLayout().GetScalingRatio()
-               : Settings::values.resolution_factor;
+    return !Settings::values.resolution_factor ? VideoCore::g_emu_window->GetFramebuffer()[0]
+                                                     ->GetFramebufferLayout()
+                                                     .GetScalingRatio()
+                                               : Settings::values.resolution_factor;
 }
 
 template <bool morton_to_gl, PixelFormat format>

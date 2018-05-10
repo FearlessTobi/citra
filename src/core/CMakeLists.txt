@@ -76,6 +76,8 @@ add_library(core STATIC
     frontend/camera/interface.h
     frontend/emu_window.cpp
     frontend/emu_window.h
+    frontend/framebuffer.cpp
+    frontend/framebuffer.h
     frontend/framebuffer_layout.cpp
     frontend/framebuffer_layout.h
     frontend/input.h

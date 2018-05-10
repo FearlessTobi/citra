@@ -9,6 +9,8 @@ add_executable(citra-qt
     aboutdialog.h
     bootmanager.cpp
     bootmanager.h
+    gbuffer.cpp
+    gbuffer.h
     citra-qt.rc
     configuration/config.cpp
     configuration/config.h

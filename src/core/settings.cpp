@@ -24,8 +24,12 @@ void Apply() {
     VideoCore::g_shader_jit_enabled = values.use_shader_jit;
 
     if (VideoCore::g_emu_window) {
-        auto layout = VideoCore::g_emu_window->GetFramebufferLayout();
-        VideoCore::g_emu_window->UpdateCurrentFramebufferLayout(layout.width, layout.height);
+        auto screens = VideoCore::g_emu_window->GetFramebuffer();
+        for (int i = 0; i < screens.size(); ++i) {
+            auto layout = Settings::values.screens[i].layout_option;
+            auto swap_screen = Settings::values.screens[i].swap_screen;
+            screens[i]->ChangeFramebufferLayout(layout, swap_screen);
+        }
     }
 
     if (Core::System::GetInstance().IsPoweredOn()) {

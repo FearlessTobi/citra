@@ -17,8 +17,6 @@ ConfigureGraphics::ConfigureGraphics(QWidget* parent)
     ui->frame_limit->setEnabled(Settings::values.use_frame_limit);
     connect(ui->toggle_frame_limit, &QCheckBox::stateChanged, ui->frame_limit,
             &QSpinBox::setEnabled);
-
-    ui->layoutBox->setEnabled(!Settings::values.custom_layout);
 }
 
 ConfigureGraphics::~ConfigureGraphics() {}
@@ -31,8 +29,6 @@ void ConfigureGraphics::setConfiguration() {
     ui->toggle_vsync->setChecked(Settings::values.use_vsync);
     ui->toggle_frame_limit->setChecked(Settings::values.use_frame_limit);
     ui->frame_limit->setValue(Settings::values.frame_limit);
-    ui->layout_combobox->setCurrentIndex(static_cast<int>(Settings::values.layout_option));
-    ui->swap_screen->setChecked(Settings::values.swap_screen);
 }
 
 void ConfigureGraphics::applyConfiguration() {
@@ -43,9 +39,6 @@ void ConfigureGraphics::applyConfiguration() {
     Settings::values.use_vsync = ui->toggle_vsync->isChecked();
     Settings::values.use_frame_limit = ui->toggle_frame_limit->isChecked();
     Settings::values.frame_limit = ui->frame_limit->value();
-    Settings::values.layout_option =
-        static_cast<Settings::LayoutOption>(ui->layout_combobox->currentIndex());
-    Settings::values.swap_screen = ui->swap_screen->isChecked();
     Settings::Apply();
 }
 
