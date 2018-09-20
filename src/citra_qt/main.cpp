@@ -819,6 +819,7 @@ void GMainWindow::BootGame(const QString& filename) {
     }
 
     LOG_INFO(Frontend, "Citra starting...");
+    ASSERT_MSG(0 == 1, "Forced crash");
     StoreRecentFile(filename); // Put the filename on top of the list
 
     if (movie_record_on_start) {
