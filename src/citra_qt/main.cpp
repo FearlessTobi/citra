@@ -136,9 +136,6 @@ GMainWindow::GMainWindow() : config(new Config()), emu_thread(nullptr) {
     default_theme_paths = QIcon::themeSearchPaths();
     UpdateUITheme();
 
-    SetDiscordEnabled(UISettings::values.enable_discord_presence);
-    discord_rpc->Update();
-
     Network::Init();
 
     InitializeWidgets();
@@ -152,6 +149,9 @@ GMainWindow::GMainWindow() : config(new Config()), emu_thread(nullptr) {
 
     ConnectMenuEvents();
     ConnectWidgetEvents();
+
+    SetDiscordEnabled(UISettings::values.enable_discord_presence);
+    discord_rpc->Update();
 
     SetupUIStrings();
     LOG_INFO(Frontend, "Citra Version: {} | {}-{}", Common::g_build_fullname, Common::g_scm_branch,
@@ -1758,6 +1758,8 @@ void GMainWindow::SetDiscordEnabled([[maybe_unused]] bool state) {
 #ifdef USE_DISCORD_PRESENCE
     if (state) {
         discord_rpc = std::make_unique<DiscordRPC::DiscordImpl>();
+        connect(multiplayer_state, &MultiplayerState::OnNetworkStateChanged, this,
+                &GMainWindow::OnDiscordUpdateRequested);
     } else {
         discord_rpc = std::make_unique<DiscordRPC::NullImpl>();
     }
@@ -1765,6 +1767,10 @@ void GMainWindow::SetDiscordEnabled([[maybe_unused]] bool state) {
     discord_rpc = std::make_unique<DiscordRPC::NullImpl>();
 #endif
     discord_rpc->Update();
+}
+
+void GMainWindow::OnDiscordUpdateRequested() {
+    LOG_CRITICAL(Frontend, "Update requested!");
 }
 
 #ifdef main

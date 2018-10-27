@@ -188,6 +188,7 @@ private slots:
     void OnCheckForUpdates();
     void OnOpenUpdater();
     void OnLanguageChanged(const QString& locale);
+    void OnDiscordUpdateRequested();
 
 private:
     bool ValidateMovie(const QString& path, u64 program_id = 0);

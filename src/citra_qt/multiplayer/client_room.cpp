@@ -58,6 +58,7 @@ void ClientRoomWindow::OnStateChange(const Network::RoomMember::State& state) {
     if (state == Network::RoomMember::State::Joined) {
         ui->chat->Clear();
         ui->chat->AppendStatusMessage(tr("Connected"));
+       // GMainWindow::discord_rpc; // Discord.update();
     }
     UpdateView();
 }

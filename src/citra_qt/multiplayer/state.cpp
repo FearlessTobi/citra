@@ -87,7 +87,7 @@ void MultiplayerState::retranslateUi() {
 }
 
 void MultiplayerState::OnNetworkStateChanged(const Network::RoomMember::State& state) {
-    LOG_DEBUG(Frontend, "Network State: {}", Network::GetStateStr(state));
+    LOG_CRITICAL(Frontend, "Network State: {}", Network::GetStateStr(state));
     bool is_connected = false;
     switch (state) {
     case Network::RoomMember::State::LostConnection:
