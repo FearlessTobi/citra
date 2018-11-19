@@ -43,6 +43,22 @@ static bool IsVendorAmd() {
     return gpu_vendor == "ATI Technologies Inc." || gpu_vendor == "Advanced Micro Devices, Inc.";
 }
 
+struct FramebufferCacheKey {
+    bool stencil_enable = false;
+    bool render_shadow = false;
+
+    Surface color_surface;
+    Surface depth_surface;
+
+    auto Tie() const {
+        return std::tie(stencil_enable, render_shadow, color_surface, depth_surface);
+    }
+
+    bool operator<(const FramebufferCacheKey& rhs) const {
+        return Tie() < rhs.Tie();
+    }
+};
+
 RasterizerOpenGL::RasterizerOpenGL(EmuWindow& window)
     : is_amd(IsVendorAmd()), shader_dirty(true),
       vertex_buffer(GL_ARRAY_BUFFER, VERTEX_BUFFER_SIZE, is_amd),
@@ -134,9 +150,6 @@ RasterizerOpenGL::RasterizerOpenGL(EmuWindow& window)
     glVertexAttribPointer(ATTRIBUTE_VIEW, 3, GL_FLOAT, GL_FALSE, sizeof(HardwareVertex),
                           (GLvoid*)offsetof(HardwareVertex, view));
     glEnableVertexAttribArray(ATTRIBUTE_VIEW);
-
-    // Create render framebuffer
-    framebuffer.Create();
 
     // Allocate and bind texture buffer lut textures
     texture_buffer_lut_rg.Create();
@@ -387,6 +400,54 @@ bool RasterizerOpenGL::SetupGeometryShader() {
     }
 }
 
+void RasterizerOpenGL::SetupCachedFramebuffer(const FramebufferCacheKey& fbkey,
+                                              OpenGLState& current_state) {
+    const auto [entry, is_cache_miss] = framebuffer_cache.try_emplace(fbkey);
+    auto& framebuffer = entry->second;
+
+    if (is_cache_miss)
+        framebuffer.Create();
+
+    current_state.draw.draw_framebuffer = framebuffer.handle;
+    current_state.Apply();
+
+    if (!is_cache_miss)
+        return;
+
+    if (fbkey.render_shadow) {
+        glFramebufferParameteri(GL_DRAW_FRAMEBUFFER, GL_FRAMEBUFFER_DEFAULT_WIDTH,
+                                fbkey.color_surface->width * fbkey.color_surface->res_scale);
+        glFramebufferParameteri(GL_DRAW_FRAMEBUFFER, GL_FRAMEBUFFER_DEFAULT_HEIGHT,
+                                fbkey.color_surface->height * fbkey.color_surface->res_scale);
+        glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
+        glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, 0,
+                               0);
+        state.image_shadow_buffer = fbkey.color_surface->texture.handle;
+    } else {
+        glFramebufferTexture2D(
+            GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+            fbkey.color_surface != nullptr ? fbkey.color_surface->texture.handle : 0, 0);
+        if (fbkey.depth_surface != nullptr) {
+            if (fbkey.stencil_enable) {
+                // attach both depth and stencil
+                glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
+                                       GL_TEXTURE_2D, fbkey.depth_surface->texture.handle, 0);
+            } else {
+                // attach depth
+                glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D,
+                                       fbkey.depth_surface->texture.handle, 0);
+                // clear stencil attachment
+                glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, 0,
+                                       0);
+            }
+        } else {
+            // clear both depth and stencil attachment
+            glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D,
+                                   0, 0);
+        }
+    }
+}
+
 bool RasterizerOpenGL::AccelerateDrawBatch(bool is_indexed) {
     const auto& regs = Pica::g_state.regs;
     if (regs.pipeline.use_gs != Pica::PipelineRegs::UseGS::No) {
@@ -558,43 +619,17 @@ bool RasterizerOpenGL::Draw(bool accelerate, bool is_indexed) {
                                          surfaces_rect.bottom, surfaces_rect.top))}; // Bottom
 
     // Bind the framebuffer surfaces
-    state.draw.draw_framebuffer = framebuffer.handle;
-    state.Apply();
+    FramebufferCacheKey fbkey;
+    fbkey.color_surface = color_surface;
+    fbkey.depth_surface = depth_surface;
+    fbkey.stencil_enable = has_stencil;
+    fbkey.render_shadow = shadow_rendering;
 
-    if (shadow_rendering) {
-        if (!allow_shadow || color_surface == nullptr) {
-            return true;
-        }
-        glFramebufferParameteri(GL_DRAW_FRAMEBUFFER, GL_FRAMEBUFFER_DEFAULT_WIDTH,
-                                color_surface->width * color_surface->res_scale);
-        glFramebufferParameteri(GL_DRAW_FRAMEBUFFER, GL_FRAMEBUFFER_DEFAULT_HEIGHT,
-                                color_surface->height * color_surface->res_scale);
-        glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
-        glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, 0,
-                               0);
-        state.image_shadow_buffer = color_surface->texture.handle;
-    } else {
-        glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
-                               color_surface != nullptr ? color_surface->texture.handle : 0, 0);
-        if (depth_surface != nullptr) {
-            if (has_stencil) {
-                // attach both depth and stencil
-                glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
-                                       GL_TEXTURE_2D, depth_surface->texture.handle, 0);
-            } else {
-                // attach depth
-                glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D,
-                                       depth_surface->texture.handle, 0);
-                // clear stencil attachment
-                glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, 0,
-                                       0);
-            }
-        } else {
-            // clear both depth and stencil attachment
-            glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D,
-                                   0, 0);
-        }
+    if (shadow_rendering && (!allow_shadow || color_surface == nullptr)) {
+        return true;
     }
+
+    SetupCachedFramebuffer(fbkey, state);
 
     // Sync the viewport
     state.viewport.x =

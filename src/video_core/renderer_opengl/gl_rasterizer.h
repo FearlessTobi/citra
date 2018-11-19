@@ -34,6 +34,8 @@ class ShaderProgramManager;
 
 namespace OpenGL {
 
+struct FramebufferCacheKey;
+
 class RasterizerOpenGL : public VideoCore::RasterizerInterface {
 public:
     explicit RasterizerOpenGL(EmuWindow& renderer);
@@ -245,6 +247,8 @@ private:
     /// Setup geometry shader for AccelerateDrawBatch
     bool SetupGeometryShader();
 
+    void SetupCachedFramebuffer(const FramebufferCacheKey& fbkey, OpenGLState& current_state);
+
     bool is_amd;
 
     OpenGLState state;
@@ -256,6 +260,8 @@ private:
     std::vector<HardwareVertex> vertex_batch;
 
     bool shader_dirty;
+
+    std::map<FramebufferCacheKey, OGLFramebuffer> framebuffer_cache;
 
     struct {
         UniformData data;
