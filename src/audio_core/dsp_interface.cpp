@@ -43,6 +43,19 @@ void DspInterface::OutputFrame(StereoFrame16& frame) {
     fifo.Push(frame.data(), frame.size());
 }
 
+void DspInterface::OutputStereoBuf(StereoBuffer16& frame) {
+    if (!sink)
+        return;
+
+    std::vector<std::array<s16, 2>> neww;
+    neww.resize(frame.size());
+    for (int i = 0; i < frame.size(); i++) {
+        neww[i] = frame[i];
+    }
+
+    fifo.Push(neww.data(), neww.size());
+}
+
 void DspInterface::OutputSample(std::array<s16, 2> sample) {
     if (!sink)
         return;

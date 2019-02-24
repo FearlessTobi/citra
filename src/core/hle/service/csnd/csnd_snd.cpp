@@ -2,6 +2,7 @@
 // Licensed under GPLv2 or any later version
 // Refer to the license.txt file included.
 
+#include "audio_core/dsp_interface.h"
 #include "common/alignment.h"
 #include "core/core.h"
 #include "core/hle/ipc_helpers.h"
@@ -47,7 +48,81 @@ void CSND_SND::Shutdown(Kernel::HLERequestContext& ctx) {
     IPC::RequestBuilder rb = rp.MakeBuilder(1, 0);
     rb.Push(RESULT_SUCCESS);
 
-    LOG_WARNING(Service_CSND, "(STUBBED) called");
+    LOG_CRITICAL(Service_CSND, "(STUBBED) called");
+}
+
+void Process0xE(Type0Command command, u8* ptr) {
+    Command0xE command_0xE;
+    std::memcpy(&command_0xE, ptr, sizeof(Command0xE));
+
+    std::vector<u8> data;
+    data.resize(command_0xE.total_size_of_one_block);
+    int size = data.size();
+    printf("%i\n", size);
+
+    u8* POINTER =
+        Core::System::GetInstance().Memory().GetPhysicalPointer(command_0xE.first_block_phys_addr);
+
+    std::memcpy(&data[0], POINTER, size);
+    for (int i = 0; i < data.size(); i += 160) { // TODO: This loop doesn't cover everything
+        for (int i : stop_threads) {
+            if (i == command_0xE.flags_timer.channel_index) {
+                printf("Terminated!\n");
+                return;
+            }
+        }
+        StereoBuffer16 buf = DecodePCM8(data, 160, i);
+        Core::System::GetInstance().DSP().OutputStereoBuf(buf);
+        std::this_thread::sleep_for(std::chrono::microseconds(6250));
+    }
+}
+
+void ProcessCommand(Type0Command command, u8* ptr) {
+    Command0x1 command_0x1;
+    std::memcpy(&command_0x1, ptr, sizeof(Command0x1));
+    if (command.command_id == 0x1) {
+        LOG_CRITICAL(Service_CSND, "PLAY: {}", command_0x1.play);
+    }
+
+    if (command.command_id == 0xE) {
+        // TODO: Channel Index
+        Command0xE command_0xE;
+        std::memcpy(&command_0xE, ptr, sizeof(Command0xE));
+        LOG_CRITICAL(Service_CSND, "offset: 0x{:08X}", command_0xE.offset);
+        LOG_CRITICAL(Service_CSND, "flags_timer: 0x{:08X}", command_0xE.flags_timer.raw);
+        LOG_CRITICAL(Service_CSND, "flags_timer.channel_index: 0x{:08X}",
+                     command_0xE.flags_timer.channel_index);
+        LOG_CRITICAL(Service_CSND, "flags_timer.enable_linear_interpolation: 0x{:08X}",
+                     command_0xE.flags_timer.enable_linear_interpolation);
+        LOG_CRITICAL(Service_CSND, "flags_timer.repeat_mode: 0x{:08X}",
+                     command_0xE.flags_timer.repeat_mode);
+        LOG_CRITICAL(Service_CSND, "flags_timer.encoding: 0x{:08X}",
+                     command_0xE.flags_timer.encoding);
+        LOG_CRITICAL(Service_CSND, "flags_timer.enable_playback: 0x{:08X}",
+                     command_0xE.flags_timer.enable_playback);
+        LOG_CRITICAL(Service_CSND, "flags_timer.sample_rate: 0x{:08X}",
+                     command_0xE.flags_timer.sample_rate);
+        LOG_CRITICAL(Service_CSND, "channel_volume: 0x{:08X}", command_0xE.channel_volume);
+        LOG_CRITICAL(Service_CSND, "capture_volume: 0x{:08X}", command_0xE.capture_volume);
+        LOG_CRITICAL(Service_CSND, "first_block_phys_addr: 0x{:08X}",
+                     command_0xE.first_block_phys_addr);
+        LOG_CRITICAL(Service_CSND, "second_block_phys_addr: 0x{:08X}",
+                     command_0xE.second_block_phys_addr);
+        LOG_CRITICAL(Service_CSND, "total_size_of_one_block: 0x{:08X}",
+                     command_0xE.total_size_of_one_block);
+
+        int i = command_0xE.flags_timer.channel_index;
+        if (slot_threads.find(i) != slot_threads.end()) {
+            stop_threads.push_back(i);
+            slot_threads.at(i).join();
+            slot_threads.erase(i);
+            stop_threads.erase(std::remove(stop_threads.begin(), stop_threads.end(), i),
+                               stop_threads.end());
+        }
+
+        std::thread thread(Process0xE, command, ptr);
+        slot_threads.emplace(i, std::move(thread));
+    }
 }
 
 void CSND_SND::ExecuteCommands(Kernel::HLERequestContext& ctx) {
@@ -65,11 +140,14 @@ void CSND_SND::ExecuteCommands(Kernel::HLERequestContext& ctx) {
         std::memcpy(&command, ptr, sizeof(Type0Command));
         command.finished |= 1;
         std::memcpy(ptr, &command, sizeof(Type0Command));
+        LOG_CRITICAL(Service_CSND, "command_id: 0x{:04X}", command.command_id);
+
+        ProcessCommand(command, ptr);
 
         rb.Push(RESULT_SUCCESS);
     }
 
-    LOG_WARNING(Service_CSND, "(STUBBED) called, addr=0x{:08X}", addr);
+    LOG_CRITICAL(Service_CSND, "(STUBBED) called, addr=0x{:08X}", addr);
 }
 
 void CSND_SND::AcquireSoundChannels(Kernel::HLERequestContext& ctx) {
@@ -79,7 +157,7 @@ void CSND_SND::AcquireSoundChannels(Kernel::HLERequestContext& ctx) {
     rb.Push(RESULT_SUCCESS);
     rb.Push<u32>(0xFFFFFF00);
 
-    LOG_WARNING(Service_CSND, "(STUBBED) called");
+    LOG_CRITICAL(Service_CSND, "(STUBBED) called");
 }
 
 void CSND_SND::ReleaseSoundChannels(Kernel::HLERequestContext& ctx) {
@@ -88,7 +166,7 @@ void CSND_SND::ReleaseSoundChannels(Kernel::HLERequestContext& ctx) {
     IPC::RequestBuilder rb = rp.MakeBuilder(1, 0);
     rb.Push(RESULT_SUCCESS);
 
-    LOG_WARNING(Service_CSND, "(STUBBED) called");
+    LOG_CRITICAL(Service_CSND, "(STUBBED) called");
 }
 
 void CSND_SND::AcquireCapUnit(Kernel::HLERequestContext& ctx) {
@@ -112,7 +190,7 @@ void CSND_SND::AcquireCapUnit(Kernel::HLERequestContext& ctx) {
         rb.Push<u32>(0);
     }
 
-    LOG_WARNING(Service_CSND, "(STUBBED) called");
+    LOG_CRITICAL(Service_CSND, "(STUBBED) called");
 }
 
 void CSND_SND::ReleaseCapUnit(Kernel::HLERequestContext& ctx) {
@@ -124,7 +202,7 @@ void CSND_SND::ReleaseCapUnit(Kernel::HLERequestContext& ctx) {
     IPC::RequestBuilder rb = rp.MakeBuilder(1, 0);
     rb.Push(RESULT_SUCCESS);
 
-    LOG_WARNING(Service_CSND, "(STUBBED) called, capture_unit_index={}", index);
+    LOG_CRITICAL(Service_CSND, "(STUBBED) called, capture_unit_index={}", index);
 }
 
 void CSND_SND::FlushDataCache(Kernel::HLERequestContext& ctx) {
@@ -172,7 +250,7 @@ void CSND_SND::Reset(Kernel::HLERequestContext& ctx) {
     IPC::RequestBuilder rb = rp.MakeBuilder(1, 0);
     rb.Push(RESULT_SUCCESS);
 
-    LOG_WARNING(Service_CSND, "(STUBBED) called");
+    LOG_CRITICAL(Service_CSND, "(STUBBED) called");
 }
 
 CSND_SND::CSND_SND(Core::System& system) : ServiceFramework("csnd:SND", 4), system(system) {
@@ -199,6 +277,21 @@ CSND_SND::CSND_SND(Core::System& system) : ServiceFramework("csnd:SND", 4), syst
 void InstallInterfaces(Core::System& system) {
     auto& service_manager = system.ServiceManager();
     std::make_shared<CSND_SND>(system)->InstallAsService(service_manager);
+}
+
+StereoBuffer16 DecodePCM8(const std::vector<u8> data, const std::size_t sample_count,
+                          const std::size_t offset) {
+    const auto decode_sample = [](u8 sample) {
+        return static_cast<s16>(static_cast<u16>(sample) << 8);
+    };
+
+    StereoBuffer16 ret(sample_count);
+
+    for (std::size_t i = 0; i < sample_count; i++) {
+        ret[i].fill(decode_sample(data[i + offset]));
+    }
+
+    return ret;
 }
 
 } // namespace Service::CSND

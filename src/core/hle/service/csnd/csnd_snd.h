@@ -14,7 +14,55 @@ class System;
 
 namespace Service::CSND {
 
+struct Type0Command {
+    // command id and next command offset
+    u16 offset;
+    u16 command_id;
+    u32 finished;
+    u32 flags;
+    u8 parameters[20];
+};
+static_assert(sizeof(Type0Command) == 0x20, "Type0Command structure size is wrong");
+
+struct Command0x1 {
+    // command id and next command offset
+    u16 offset;
+    u16 command_id;
+    u32 play; // stop=0, play=1
+    INSERT_PADDING_BYTES(0x10);
+};
+static_assert(sizeof(Type0Command) == 0x20, "Type0Command structure size is wrong");
+
+#pragma pack(push, 1)
+struct Command0xE {
+    // command id and next command offset
+    // comment is position after!!
+    u16 offset;              // 0x2
+    u16 command_id;          // 0x4
+    INSERT_PADDING_BYTES(4); // 0x8
+    union {
+        u32 raw;
+
+        BitField<0, 5, u32> channel_index;
+        BitField<5, 1, u32> enable_linear_interpolation;
+        BitField<6, 3, u32> ignored;
+        BitField<9, 2, u32> repeat_mode;
+        BitField<11, 2, u32> encoding;
+        BitField<13, 1, u32> enable_playback;
+        BitField<14, 1, u32> ignored2;
+        BitField<15, 17, u32> sample_rate;
+    } flags_timer;
+    u32 channel_volume;          // 0x10
+    u32 capture_volume;          // 0x14
+    u32 first_block_phys_addr;   // 0x18
+    u32 second_block_phys_addr;  // 0x1C
+    u32 total_size_of_one_block; // 0x20
+};
+static_assert(sizeof(Command0xE) == 0x20, "Command0xE structure size is wrong");
+#pragma pack(pop)
+
 class CSND_SND final : public ServiceFramework<CSND_SND> {
+
 public:
     explicit CSND_SND(Core::System& system);
     ~CSND_SND() = default;
@@ -165,15 +213,6 @@ private:
      */
     void Reset(Kernel::HLERequestContext& ctx);
 
-    struct Type0Command {
-        // command id and next command offset
-        u32 command_id;
-        u32 finished;
-        u32 flags;
-        u8 parameters[20];
-    };
-    static_assert(sizeof(Type0Command) == 0x20, "Type0Command structure size is wrong");
-
     Core::System& system;
 
     Kernel::SharedPtr<Kernel::Mutex> mutex = nullptr;
@@ -186,4 +225,11 @@ private:
 /// Initializes the CSND_SND Service
 void InstallInterfaces(Core::System& system);
 
+using StereoBuffer16 = std::deque<std::array<s16, 2>>;
+
+StereoBuffer16 DecodePCM8(const std::vector<u8> data, const std::size_t sample_count,
+                          const std::size_t offset);
+
+std::vector<int> stop_threads;
+std::map<int, std::thread> slot_threads;
 } // namespace Service::CSND

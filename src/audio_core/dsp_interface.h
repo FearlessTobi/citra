@@ -101,6 +101,8 @@ public:
     /// Enable/Disable audio stretching.
     void EnableStretching(bool enable);
 
+    void OutputStereoBuf(StereoBuffer16& sample);
+
 protected:
     void OutputFrame(StereoFrame16& frame);
     void OutputSample(std::array<s16, 2> sample);
