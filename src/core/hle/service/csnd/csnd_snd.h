@@ -230,6 +230,6 @@ using StereoBuffer16 = std::deque<std::array<s16, 2>>;
 StereoBuffer16 DecodePCM8(const std::vector<u8> data, const std::size_t sample_count,
                           const std::size_t offset);
 
-std::vector<int> stop_threads;
-std::map<int, std::thread> slot_threads;
+static std::vector<int> stop_threads;
+static std::map<int, std::thread> slot_threads;
 } // namespace Service::CSND
