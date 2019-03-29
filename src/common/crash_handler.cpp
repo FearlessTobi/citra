@@ -13,8 +13,8 @@
 #include <csetjmp>
 #include <cstdio>
 #include <cstdlib>
+#include <optional>
 #include <string>
-#include <boost/optional.hpp>
 #include <fmt/format.h>
 #include "common/scope_exit.h"
 
@@ -23,7 +23,7 @@ namespace Common {
 static bool unhandled_exception_called;
 static std::jmp_buf unhandled_exception_jmp_buf;
 static std::vector<std::string> unhandled_exception_stack_trace;
-static boost::optional<std::string> minidump_filename;
+static std::optional<std::string> minidump_filename;
 
 static void* ctx_buffer = nullptr;
 static PCONTEXT ctx = nullptr;
@@ -35,7 +35,7 @@ static void CreateMiniDump(const std::string& filename, _EXCEPTION_POINTERS*);
 
 void CrashHandler(std::function<void()> try_,
                   std::function<void(const Common::CrashInformation&)> catch_,
-                  boost::optional<std::string> filename) {
+                  std::optional<std::string> filename) {
     unhandled_exception_called = false;
     minidump_filename = filename;
 
@@ -255,7 +255,7 @@ namespace Common {
 
 void CrashHandler(std::function<void()> try_,
                   std::function<void(const Common::CrashInformation&)> catch_,
-                  boost::optional<std::string> filename) {
+                  std::optional<std::string> filename) {
     // Crash handler unimplemented for this platform
     try_();
 }

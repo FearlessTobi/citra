@@ -22,7 +22,7 @@
 #include "video_core/video_core.h"
 
 static std::string GenerateMinidumpFilename() {
-    QString dir = QString::fromStdString(FileUtil::GetUserPath(D_LOGS_IDX));
+    QString dir = QString::fromStdString(FileUtil::GetUserPath(FileUtil::UserPath::LogDir));
     QString file = QDateTime::currentDateTime().toString("'minidump-citra-'yyyyMMdd-HHmmss'.dmp'");
     return QDir::toNativeSeparators(dir + "/" + file).toStdString();
 }

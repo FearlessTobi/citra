@@ -3,18 +3,18 @@
 // Refer to the license.txt file included.
 
 #include <functional>
+#include <optional>
 #include <string>
 #include <vector>
-#include <boost/optional.hpp>
 
 namespace Common {
 
 struct CrashInformation {
     std::vector<std::string> stack_trace;
-    boost::optional<std::string> minidump_filename;
+    std::optional<std::string> minidump_filename;
 };
 
 void CrashHandler(std::function<void()> try_, std::function<void(const CrashInformation&)> catch_,
-                  boost::optional<std::string> minidump_filename = {});
+                  std::optional<std::string> minidump_filename = {});
 
 } // namespace Common
