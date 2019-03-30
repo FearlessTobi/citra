@@ -2,6 +2,7 @@
 // Licensed under GPLv2 or any later version
 // Refer to the license.txt file included.
 
+#include <math.h>
 #include "audio_core/dsp_interface.h"
 #include "common/alignment.h"
 #include "core/core.h"
@@ -10,6 +11,9 @@
 #include "core/hle/service/csnd/csnd_snd.h"
 
 namespace Service::CSND {
+
+/// Creates a CSND timer value from a sample rate.
+#define CSND_TIMER(n) (0x3FEC3FC / ((u32)(n)))
 
 void CSND_SND::Initialize(Kernel::HLERequestContext& ctx) {
     IPC::RequestParser rp(ctx, 0x01, 5, 0);
@@ -51,7 +55,23 @@ void CSND_SND::Shutdown(Kernel::HLERequestContext& ctx) {
     LOG_CRITICAL(Service_CSND, "(STUBBED) called");
 }
 
-void Process0xE(Type0Command command, u8* ptr) {
+void CSND_SND::Timer(u64 userdata, s64 cycles_late) {
+    auto& timing = Core::System::GetInstance().CoreTiming();
+
+    if (!(count > buffer.size())) {
+        Core::System::GetInstance().DSP().OutputStereoBuf(buffer, 1, count);
+        Core::System::GetInstance().DSP().OutputStereoBuf(buffer, 1, count);
+        Core::System::GetInstance().DSP().OutputStereoBuf(buffer, 1, count);
+        count++;
+    } else {
+        LOG_CRITICAL(Service_CSND, "Second {} {}", count, buffer.size());
+    }
+
+    // schedule next run
+    timing.ScheduleEvent(sample_rate_timer - cycles_late, timer_event);
+}
+
+void CSND_SND::Process0xE(Type0Command command, u8* ptr) {
     Command0xE command_0xE;
     std::memcpy(&command_0xE, ptr, sizeof(Command0xE));
 
@@ -63,21 +83,31 @@ void Process0xE(Type0Command command, u8* ptr) {
     u8* POINTER =
         Core::System::GetInstance().Memory().GetPhysicalPointer(command_0xE.first_block_phys_addr);
 
+    int sr = command_0xE.flags_timer.sample_rate;
+    sample_rate_timer = CSND_TIMER(sr);
+    auto& timing = Core::System::GetInstance().CoreTiming();
+
     std::memcpy(&data[0], POINTER, size);
-    for (int i = 0; i < data.size(); i += 160) { // TODO: This loop doesn't cover everything
-        for (int i : stop_threads) {
-            if (i == command_0xE.flags_timer.channel_index) {
-                printf("Terminated!\n");
-                return;
-            }
-        }
-        StereoBuffer16 buf = DecodePCM8(data, 160, i);
+    int sqrt = std::sqrt(sr);
+    // for xump ~110
+    /*for (int i = 0; i < data.size(); i += sqrt) { // TODO: This loop doesn't cover everything
+        StereoBuffer16 buf = DecodePCM8(data, sqrt, i);
         Core::System::GetInstance().DSP().OutputStereoBuf(buf);
-        std::this_thread::sleep_for(std::chrono::microseconds(6250));
+        std::this_thread::sleep_for(std::chrono::microseconds(1000000 / sqrt));
+    }*/
+
+    buffer = DecodePCM8(data, data.size(), 0);
+    count = 0;
+    if (!started) {
+        LOG_WARNING(Frontend, "Starting!");
+        timer_event = timing.RegisterEvent(
+            "CSND::Timer", [this](u64 userdata, s64 cycles_late) { Timer(userdata, cycles_late); });
+        timing.ScheduleEvent(sample_rate_timer, timer_event);
+        started = true;
     }
 }
 
-void ProcessCommand(Type0Command command, u8* ptr) {
+void CSND_SND::ProcessCommand(Type0Command command, u8* ptr) {
     Command0x1 command_0x1;
     std::memcpy(&command_0x1, ptr, sizeof(Command0x1));
     if (command.command_id == 0x1) {
@@ -112,16 +142,8 @@ void ProcessCommand(Type0Command command, u8* ptr) {
                      command_0xE.total_size_of_one_block);
 
         int i = command_0xE.flags_timer.channel_index;
-        if (slot_threads.find(i) != slot_threads.end()) {
-            stop_threads.push_back(i);
-            slot_threads.at(i).join();
-            slot_threads.erase(i);
-            stop_threads.erase(std::remove(stop_threads.begin(), stop_threads.end(), i),
-                               stop_threads.end());
-        }
 
-        std::thread thread(Process0xE, command, ptr);
-        slot_threads.emplace(i, std::move(thread));
+        Process0xE(command, ptr);
     }
 }
 

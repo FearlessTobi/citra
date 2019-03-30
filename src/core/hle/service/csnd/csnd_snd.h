@@ -14,6 +14,8 @@ class System;
 
 namespace Service::CSND {
 
+using StereoBuffer16 = std::deque<std::array<s16, 2>>;
+
 struct Type0Command {
     // command id and next command offset
     u16 offset;
@@ -93,7 +95,10 @@ private:
      *      1 : Result of function, 0 on success, otherwise error code
      */
     void Shutdown(Kernel::HLERequestContext& ctx);
+    void Timer(u64 userdata, s64 cycles_late);
 
+    void Process0xE(Type0Command command, u8* ptr);
+    void ProcessCommand(Type0Command command, u8* ptr);
     /**
      * CSND_SND::ExecuteCommands service function
      *  Inputs:
@@ -220,16 +225,17 @@ private:
 
     static constexpr u32 MaxCaptureUnits = 2;
     std::array<bool, MaxCaptureUnits> capture_units = {false, false};
+
+    int sample_rate_timer = 0;
+    int count = 0;
+    Core::TimingEventType* timer_event = nullptr;
+    StereoBuffer16 buffer;
+    bool started = false;
 };
 
 /// Initializes the CSND_SND Service
 void InstallInterfaces(Core::System& system);
 
-using StereoBuffer16 = std::deque<std::array<s16, 2>>;
-
 StereoBuffer16 DecodePCM8(const std::vector<u8> data, const std::size_t sample_count,
                           const std::size_t offset);
-
-static std::vector<int> stop_threads;
-static std::map<int, std::thread> slot_threads;
 } // namespace Service::CSND

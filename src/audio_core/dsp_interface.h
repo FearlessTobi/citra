@@ -103,6 +103,8 @@ public:
 
     void OutputStereoBuf(StereoBuffer16& sample);
 
+    void OutputStereoBuf(StereoBuffer16& frame, std::size_t sample_count, std::size_t offset);
+
 protected:
     void OutputFrame(StereoFrame16& frame);
     void OutputSample(std::array<s16, 2> sample);
