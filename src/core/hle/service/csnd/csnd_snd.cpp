@@ -60,11 +60,7 @@ void CSND_SND::Timer(u64 userdata, s64 cycles_late) {
 
     if (!(count > buffer.size())) {
         Core::System::GetInstance().DSP().OutputStereoBuf(buffer, 1, count);
-        Core::System::GetInstance().DSP().OutputStereoBuf(buffer, 1, count);
-        Core::System::GetInstance().DSP().OutputStereoBuf(buffer, 1, count);
         count++;
-    } else {
-        LOG_CRITICAL(Service_CSND, "Second {} {}", count, buffer.size());
     }
 
     // schedule next run
@@ -85,6 +81,7 @@ void CSND_SND::Process0xE(Type0Command command, u8* ptr) {
 
     int sr = command_0xE.flags_timer.sample_rate;
     sample_rate_timer = CSND_TIMER(sr);
+    // sample_rate_timer = sr;
     auto& timing = Core::System::GetInstance().CoreTiming();
 
     std::memcpy(&data[0], POINTER, size);
