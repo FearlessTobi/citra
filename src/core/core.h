@@ -28,6 +28,10 @@ namespace AudioCore {
 class DspInterface;
 }
 
+namespace AudioCore::CSND {
+class CsndHle;
+}
+
 namespace RPC {
 class RPCServer;
 }
@@ -165,6 +169,14 @@ public:
     }
 
     /**
+     * Gets a reference to the emulated DSP.
+     * @returns A reference to the emulated DSP.
+     */
+    AudioCore::CSND::CsndHle& CSND() {
+        return *csnd_core;
+    }
+
+    /**
      * Gets a reference to the service manager.
      * @returns A reference to the service manager.
      */
@@ -260,6 +272,9 @@ private:
     /// DSP core
     std::unique_ptr<AudioCore::DspInterface> dsp_core;
 
+    /// CSND core
+    std::unique_ptr<AudioCore::CSND::CsndHle> csnd_core;
+
     /// When true, signals that a reschedule should happen
     bool reschedule_pending{};
 
@@ -304,6 +319,10 @@ inline ARM_Interface& CPU() {
 
 inline AudioCore::DspInterface& DSP() {
     return System::GetInstance().DSP();
+}
+
+inline AudioCore::CSND::CsndHle& CSND() {
+    return System::GetInstance().CSND();
 }
 
 } // namespace Core

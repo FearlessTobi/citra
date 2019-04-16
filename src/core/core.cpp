@@ -4,6 +4,7 @@
 
 #include <memory>
 #include <utility>
+#include "audio_core/csnd/csnd_hle.h"
 #include "audio_core/dsp_interface.h"
 #include "audio_core/hle/hle.h"
 #include "audio_core/lle/lle.h"
@@ -202,6 +203,11 @@ System::ResultStatus System::Init(Frontend::EmuWindow& emu_window, u32 system_mo
 
     dsp_core->SetSink(Settings::values.sink_id, Settings::values.audio_device_id);
     dsp_core->EnableStretching(Settings::values.enable_audio_stretching);
+
+    csnd_core = std::make_unique<AudioCore::CSND::CsndHle>();
+
+    csnd_core->SetSink(Settings::values.sink_id, Settings::values.audio_device_id);
+    csnd_core->EnableStretching(Settings::values.enable_audio_stretching);
 
     telemetry_session = std::make_unique<Core::TelemetrySession>();
 

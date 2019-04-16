@@ -5,6 +5,8 @@
 #pragma once
 
 #include <memory>
+#include "audio_core/csnd/csnd_hle.h"
+#include "audio_core/csnd/csnd_source.h"
 #include "core/hle/kernel/mutex.h"
 #include "core/hle/kernel/shared_memory.h"
 #include "core/hle/service/service.h"
@@ -13,7 +15,47 @@ namespace Core {
 class System;
 }
 
+namespace AudioCore::CSND {
+class CSNDSource;
+}
+
 namespace Service::CSND {
+
+struct Type0Command {
+    // command id and next command offset
+    u16 offset;
+    u16 command_id;
+    u32 finished;
+    u32 flags;
+    u8 parameters[20];
+};
+static_assert(sizeof(Type0Command) == 0x20, "Type0Command structure size is wrong");
+
+#pragma pack(push, 1)
+struct Command0xE {
+    u16 offset;
+    u16 command_id;
+    INSERT_PADDING_BYTES(4);
+    union {
+        u32 raw;
+
+        BitField<0, 6, u32> channel_index;
+        BitField<6, 1, u32> enable_linear_interpolation;
+        BitField<7, 3, u32> ignored;
+        BitField<10, 2, u32> repeat_mode;
+        BitField<12, 2, u32> encoding;
+        BitField<14, 1, u32> enable_playback;
+        BitField<15, 1, u32> ignored2;
+        BitField<16, 16, u32> timer;
+    } flags_timer;
+    u32 channel_volume;
+    u32 capture_volume;
+    u32 first_block_phys_addr;
+    u32 second_block_phys_addr;
+    u32 total_size_of_one_block;
+};
+static_assert(sizeof(Command0xE) == 0x20, "Command0xE structure size is wrong");
+#pragma pack(pop)
 
 class CSND_SND final : public ServiceFramework<CSND_SND> {
 public:
@@ -56,6 +98,10 @@ private:
      *      1 : Result of function, 0 on success, otherwise error code
      */
     void ExecuteCommands(Kernel::HLERequestContext& ctx);
+
+    void ProcessCommand(Type0Command command, u8* ptr);
+
+    void Handle0xE(u8* ptr);
 
     /**
      * CSND_SND::ExecuteType1Commands service function
@@ -165,15 +211,6 @@ private:
      *      1 : Result of function, 0 on success, otherwise error code
      */
     void Reset(Kernel::HLERequestContext& ctx);
-
-    struct Type0Command {
-        // command id and next command offset
-        u32 command_id;
-        u32 finished;
-        u32 flags;
-        u8 parameters[20];
-    };
-    static_assert(sizeof(Type0Command) == 0x20, "Type0Command structure size is wrong");
 
     Core::System& system;
 

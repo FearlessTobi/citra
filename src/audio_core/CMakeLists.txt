@@ -4,6 +4,8 @@ add_library(audio_core STATIC
     codec.h
     dsp_interface.cpp
     dsp_interface.h
+    csnd/csnd_hle.cpp
+    csnd/csnd_hle.h
     hle/adts.h
     hle/adts_reader.cpp
     hle/common.h
@@ -29,7 +31,7 @@ add_library(audio_core STATIC
     time_stretch.cpp
     time_stretch.h
 
-    $<$<BOOL:${SDL2_FOUND}>:sdl2_sink.cpp sdl2_sink.h>
+    $<$<BOOL:${SDL2_FOUND}>:sdl2_sink.cpp sdl2_sink.h csnd/csnd_source.cpp csnd/csnd_source.h>
     $<$<BOOL:${ENABLE_CUBEB}>:cubeb_sink.cpp cubeb_sink.h cubeb_input.cpp cubeb_input.h>
     $<$<BOOL:${FFMPEG_FOUND}>:hle/ffmpeg_decoder.cpp hle/ffmpeg_decoder.h hle/ffmpeg_dl.cpp hle/ffmpeg_dl.h>
     $<$<BOOL:${ENABLE_MF}>:hle/wmf_decoder.cpp hle/wmf_decoder.h hle/wmf_decoder_utils.cpp hle/wmf_decoder_utils.h>

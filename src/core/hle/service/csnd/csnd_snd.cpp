@@ -66,10 +66,54 @@ void CSND_SND::ExecuteCommands(Kernel::HLERequestContext& ctx) {
         command.finished |= 1;
         std::memcpy(ptr, &command, sizeof(Type0Command));
 
+        ProcessCommand(command, ptr);
+
         rb.Push(RESULT_SUCCESS);
     }
 
     LOG_WARNING(Service_CSND, "(STUBBED) called, addr=0x{:08X}", addr);
+}
+
+void CSND_SND::ProcessCommand(Type0Command command, u8* ptr) {
+    u16 cmd_id = command.command_id;
+    switch (cmd_id) {
+    case 0xE:
+        Handle0xE(ptr);
+        break;
+    default:
+        LOG_CRITICAL(Service_CSND, "Unknown CSND command 0x{:02X}", cmd_id);
+        break;
+    }
+}
+
+void CSND_SND::Handle0xE(u8* ptr) {
+    Command0xE command_0xE;
+    std::memcpy(&command_0xE, ptr, sizeof(Command0xE));
+    LOG_CRITICAL(Service_CSND, "flags_timer.channel_index: 0x{:08X}",
+                 command_0xE.flags_timer.channel_index);
+    LOG_CRITICAL(Service_CSND, "flags_timer.enable_linear_interpolation: 0x{:08X}",
+                 command_0xE.flags_timer.enable_linear_interpolation);
+    LOG_CRITICAL(Service_CSND, "flags_timer.repeat_mode: 0x{:08X}",
+                 command_0xE.flags_timer.repeat_mode);
+    LOG_CRITICAL(Service_CSND, "flags_timer.encoding: 0x{:08X}", command_0xE.flags_timer.encoding);
+    LOG_CRITICAL(Service_CSND, "flags_timer.enable_playback: 0x{:08X}",
+                 command_0xE.flags_timer.enable_playback);
+    LOG_CRITICAL(Service_CSND, "channel_volume: 0x{:08X}", command_0xE.channel_volume);
+    LOG_CRITICAL(Service_CSND, "capture_volume: 0x{:08X}", command_0xE.capture_volume);
+    LOG_CRITICAL(Service_CSND, "total_size_of_one_block: 0x{:08X}",
+                 command_0xE.total_size_of_one_block);
+
+    AudioCore::CSND::CSNDSource source(command_0xE);
+
+    // erase all sources with the same channel index as the new source
+    auto& CSND = Core::System::GetInstance().CSND();
+    CSND.sources.erase(std::remove_if(CSND.sources.begin(), CSND.sources.end(),
+                                      [command_0xE](AudioCore::CSND::CSNDSource current_source) {
+                                          return current_source.GetChannelIndex() ==
+                                                 command_0xE.flags_timer.channel_index;
+                                      }),
+                       CSND.sources.end());
+    CSND.sources.push_back(source);
 }
 
 void CSND_SND::AcquireSoundChannels(Kernel::HLERequestContext& ctx) {
