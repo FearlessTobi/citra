@@ -31,6 +31,19 @@ struct Type0Command {
 };
 static_assert(sizeof(Type0Command) == 0x20, "Type0Command structure size is wrong");
 
+// TODO: Write hwtest
+#pragma pack(push, 1)
+struct Command0x1 {
+    u16 offset;
+    u16 command_id;
+    INSERT_PADDING_BYTES(4);
+    u32 channel_index;
+    u32 enable_playback;
+    INSERT_PADDING_BYTES(0x10);
+};
+static_assert(sizeof(Command0x1) == 0x20, "Command0x1 structure size is wrong");
+#pragma pack(pop)
+
 #pragma pack(push, 1)
 struct Command0xE {
     u16 offset;
@@ -48,7 +61,8 @@ struct Command0xE {
         BitField<15, 1, u32> ignored2;
         BitField<16, 16, u32> timer;
     } flags_timer;
-    u32 channel_volume;
+    u16 channel_volume_left;
+    u16 channel_volume_right;
     u32 capture_volume;
     u32 first_block_phys_addr;
     u32 second_block_phys_addr;
@@ -100,6 +114,8 @@ private:
     void ExecuteCommands(Kernel::HLERequestContext& ctx);
 
     void ProcessCommand(Type0Command command, u8* ptr);
+
+    void Handle0x1(u8* ptr);
 
     void Handle0xE(u8* ptr);
 

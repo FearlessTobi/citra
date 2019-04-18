@@ -24,7 +24,12 @@ public:
 
     u32 GetChannelIndex();
 
+    void EnablePlayback(bool enable);
+
 private:
+    StereoBuffer16 DecodeMemoryBlock(u8* ptr);
+    void Resample(std::vector<s16>& samples);
+
     StereoFrame16 GenerateFrame();
 
     u32 channel_index = 0;
@@ -33,7 +38,8 @@ private:
     u32 encoding = 0;
     u32 enable_playback = 0;
     u32 timer = 0;
-    u32 channel_volume = 0;
+    u32 channel_volume_left = 0;
+    u32 channel_volume_right = 0;
     u32 capture_volume = 0;
     u32 first_block_phys_addr = 0;
     u32 second_block_phys_addr = 0;
@@ -42,12 +48,12 @@ private:
     // TODO: Still not really a good place
     u32 mul_factor = 0;
 
-    u8* ptr;
-
     std::size_t offset = 0;
     double end_counter = 0;
+    bool play_second_block = false;
 
-    std::vector<s16> samples;
+    std::vector<s16> first_samples;
+    std::vector<s16> second_samples;
 };
 
 } // namespace AudioCore::CSND

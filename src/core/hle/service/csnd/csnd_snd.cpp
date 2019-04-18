@@ -71,18 +71,44 @@ void CSND_SND::ExecuteCommands(Kernel::HLERequestContext& ctx) {
         rb.Push(RESULT_SUCCESS);
     }
 
-    LOG_WARNING(Service_CSND, "(STUBBED) called, addr=0x{:08X}", addr);
+    LOG_DEBUG(Service_CSND, "called, addr=0x{:08X}", addr);
 }
 
 void CSND_SND::ProcessCommand(Type0Command command, u8* ptr) {
     u16 cmd_id = command.command_id;
     switch (cmd_id) {
+    case 0x0:
+        Handle0x1(ptr);
+        break;
+    case 0x1:
+        Handle0x1(ptr);
+        break;
     case 0xE:
         Handle0xE(ptr);
         break;
     default:
         LOG_CRITICAL(Service_CSND, "Unknown CSND command 0x{:02X}", cmd_id);
         break;
+    }
+}
+
+void CSND_SND::Handle0x1(u8* ptr) {
+    Command0x1 command_0x1;
+    std::memcpy(&command_0x1, ptr, sizeof(Command0x1));
+    LOG_CRITICAL(Service_CSND, "channel_index: 0x{:08X}", command_0x1.channel_index);
+    LOG_CRITICAL(Service_CSND, "enable_playback: 0x{:08X}", command_0x1.enable_playback);
+
+    auto& CSND = Core::System::GetInstance().CSND();
+    auto it = std::find_if(CSND.sources.begin(), CSND.sources.end(),
+                           [command_0x1](AudioCore::CSND::CSNDSource current_source) {
+                               return current_source.GetChannelIndex() == command_0x1.channel_index;
+                           });
+
+    if (it != CSND.sources.end()) {
+        CSND.sources.at(std::distance(CSND.sources.begin(), it))
+            .EnablePlayback(command_0x1.enable_playback);
+    } else {
+        LOG_CRITICAL(Frontend, "Bad!");
     }
 }
 
@@ -98,13 +124,12 @@ void CSND_SND::Handle0xE(u8* ptr) {
     LOG_CRITICAL(Service_CSND, "flags_timer.encoding: 0x{:08X}", command_0xE.flags_timer.encoding);
     LOG_CRITICAL(Service_CSND, "flags_timer.enable_playback: 0x{:08X}",
                  command_0xE.flags_timer.enable_playback);
-    LOG_CRITICAL(Service_CSND, "channel_volume: 0x{:08X}", command_0xE.channel_volume);
+    LOG_CRITICAL(Service_CSND, "channel_volume_left: 0x{:08X}", command_0xE.channel_volume_left);
+    LOG_CRITICAL(Service_CSND, "channel_volume_right: 0x{:08X}", command_0xE.channel_volume_right);
     LOG_CRITICAL(Service_CSND, "capture_volume: 0x{:08X}", command_0xE.capture_volume);
     LOG_CRITICAL(Service_CSND, "total_size_of_one_block: 0x{:08X}",
                  command_0xE.total_size_of_one_block);
-
     AudioCore::CSND::CSNDSource source(command_0xE);
-
     // erase all sources with the same channel index as the new source
     auto& CSND = Core::System::GetInstance().CSND();
     CSND.sources.erase(std::remove_if(CSND.sources.begin(), CSND.sources.end(),

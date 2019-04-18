@@ -19,7 +19,8 @@ CSNDSource::CSNDSource(Service::CSND::Command0xE command) {
     encoding = command.flags_timer.encoding;
     enable_playback = command.flags_timer.enable_playback;
     timer = command.flags_timer.timer;
-    channel_volume = command.channel_volume;
+    channel_volume_left = command.channel_volume_left;
+    channel_volume_right = command.channel_volume_right;
     capture_volume = command.capture_volume;
     first_block_phys_addr = command.first_block_phys_addr;
     second_block_phys_addr = command.second_block_phys_addr;
@@ -27,9 +28,34 @@ CSNDSource::CSNDSource(Service::CSND::Command0xE command) {
     sample_rate = 0x3FEC3FC / timer;
     LOG_CRITICAL(Frontend, "{}", sample_rate);
 
-    // TODO: Support other options
-    ptr = Core::System::GetInstance().Memory().GetPhysicalPointer(first_block_phys_addr);
+    u8* first_block_ptr =
+        Core::System::GetInstance().Memory().GetPhysicalPointer(first_block_phys_addr);
+    StereoBuffer16 first_buf = DecodeMemoryBlock(first_block_ptr);
+    first_samples.resize(total_size_of_one_block * 2);
+    for (int i = 0; i < first_buf.size(); i++) {
+        for (int j = 0; j < first_buf[i].size(); j++) {
+            first_samples[i + j] = first_buf[i][j];
+        }
+    }
+    // Perform resampling if necessary
+    Resample(first_samples);
 
+    if (repeat_mode == 1) {
+        u8* second_block_ptr =
+            Core::System::GetInstance().Memory().GetPhysicalPointer(second_block_phys_addr);
+        StereoBuffer16 second_buf = DecodeMemoryBlock(second_block_ptr);
+        second_samples.resize(total_size_of_one_block * 2);
+        for (int i = 0; i < second_buf.size(); i++) {
+            for (int j = 0; j < second_buf[i].size(); j++) {
+                second_samples[i + j] = second_buf[i][j];
+            }
+        }
+        // Perform resampling if necessary
+        Resample(second_samples);
+    }
+}
+
+StereoBuffer16 CSNDSource::DecodeMemoryBlock(u8* ptr) {
     StereoBuffer16 buf(total_size_of_one_block);
     switch (encoding) {
     case 0:
@@ -53,15 +79,10 @@ CSNDSource::CSNDSource(Service::CSND::Command0xE command) {
         mul_factor = 1;
         break;
     }
+    return buf;
+}
 
-    samples.resize(total_size_of_one_block * 2);
-    for (int i = 0; i < buf.size(); i++) {
-        for (int j = 0; j < buf[i].size(); j++) {
-            samples[i + j] = buf[i][j];
-        }
-    }
-
-    // Perform resampling if necessary
+void CSNDSource::Resample(std::vector<s16>& samples) {
     SDL_AudioCVT cvt;
     SDL_BuildAudioCVT(&cvt, AUDIO_S16, 2, sample_rate, AUDIO_S16, 2, native_sample_rate);
     if (cvt.needed) {
@@ -93,21 +114,40 @@ u32 CSNDSource::GetChannelIndex() {
     return channel_index;
 }
 
+void CSNDSource::EnablePlayback(bool enable) {
+    enable_playback = enable;
+}
+
 StereoFrame16 CSNDSource::GenerateFrame() {
     StereoFrame16 output_frame;
     output_frame.fill({});
 
     // TODO: This skips stuff
     if (end_counter > total_size_of_one_block) {
-        return output_frame;
+        if (repeat_mode == 1) {
+            play_second_block = true;
+            offset = 0;
+            end_counter = 0;
+        } else {
+            return output_frame;
+        }
     }
 
     std::size_t size = output_frame.size();
     offset += size;
     end_counter += size * (double)((double)sample_rate / native_sample_rate) * mul_factor;
-    for (int i = 0; i < output_frame.size(); i++) {
-        for (int j = 0; j < output_frame[i].size(); j++) {
-            output_frame[i][j] = samples[i + j + offset];
+
+    if (play_second_block) {
+        for (int i = 0; i < output_frame.size(); i++) {
+            for (int j = 0; j < output_frame[i].size(); j++) {
+                output_frame[i][j] = second_samples[i + j + offset];
+            }
+        }
+    } else {
+        for (int i = 0; i < output_frame.size(); i++) {
+            for (int j = 0; j < output_frame[i].size(); j++) {
+                output_frame[i][j] = first_samples[i + j + offset];
+            }
         }
     }
 
