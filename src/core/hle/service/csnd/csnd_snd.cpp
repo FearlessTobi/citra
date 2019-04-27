@@ -66,7 +66,14 @@ void CSND_SND::ExecuteCommands(Kernel::HLERequestContext& ctx) {
         command.finished |= 1;
         std::memcpy(ptr, &command, sizeof(Type0Command));
 
-        ProcessCommand(command, ptr);
+        while (true) {
+            ProcessCommand(command, ptr);
+            if (command.offset == 0xFFFF) {
+                break;
+            }
+            ptr = shared_memory->GetPointer(command.offset);
+            std::memcpy(&command, ptr, sizeof(Type0Command));
+        }
 
         rb.Push(RESULT_SUCCESS);
     }
