@@ -387,7 +387,8 @@ ResultCode SVC::SendSyncRequest(Handle handle) {
 
     system.PrepareReschedule();
 
-    return session->SendSyncRequest(SharedFrom(kernel.GetCurrentThreadManager().GetCurrentThread()));
+    return session->SendSyncRequest(
+        SharedFrom(kernel.GetCurrentThreadManager().GetCurrentThread()));
 }
 
 /// Close a handle
@@ -891,9 +892,13 @@ ResultCode SVC::CreateThread(Handle* out_handle, u32 entry_point, u32 arg, VAddr
     case ThreadProcessorIdAll:
         LOG_INFO(Kernel_SVC,
                  "Newly created thread is allowed to be run in any Core, for now run in core 0.");
-                 processor_id = ThreadProcessorId0;
+        processor_id = ThreadProcessorId0;
         break;
     case ThreadProcessorId1:
+        break;
+    case ThreadProcessorId2:
+        LOG_ERROR(Kernel_SVC,
+                  "Newly created thread must run in the SysCore (Core2), unimplemented.");
         break;
     default:
         // TODO(bunnei): Implement support for other processor IDs
@@ -1107,8 +1112,9 @@ ResultCode SVC::QueryMemory(MemoryInfo* memory_info, PageInfo* page_info, u32 ad
 
 /// Create an event
 ResultCode SVC::CreateEvent(Handle* out_handle, u32 reset_type) {
-    std::shared_ptr<Event> evt = kernel.CreateEvent(
-        static_cast<ResetType>(reset_type), fmt::format("event-{:08x}", system.GetRunningCore().GetReg(14)));
+    std::shared_ptr<Event> evt =
+        kernel.CreateEvent(static_cast<ResetType>(reset_type),
+                           fmt::format("event-{:08x}", system.GetRunningCore().GetReg(14)));
     CASCADE_RESULT(*out_handle, kernel.GetCurrentProcess()->handle_table.Create(std::move(evt)));
 
     LOG_TRACE(Kernel_SVC, "called reset_type=0x{:08X} : created handle=0x{:08X}", reset_type,
@@ -1150,8 +1156,9 @@ ResultCode SVC::ClearEvent(Handle handle) {
 
 /// Creates a timer
 ResultCode SVC::CreateTimer(Handle* out_handle, u32 reset_type) {
-    std::shared_ptr<Timer> timer = kernel.CreateTimer(
-        static_cast<ResetType>(reset_type), fmt ::format("timer-{:08x}", system.GetRunningCore().GetReg(14)));
+    std::shared_ptr<Timer> timer =
+        kernel.CreateTimer(static_cast<ResetType>(reset_type),
+                           fmt ::format("timer-{:08x}", system.GetRunningCore().GetReg(14)));
     CASCADE_RESULT(*out_handle, kernel.GetCurrentProcess()->handle_table.Create(std::move(timer)));
 
     LOG_TRACE(Kernel_SVC, "called reset_type=0x{:08X} : created handle=0x{:08X}", reset_type,
