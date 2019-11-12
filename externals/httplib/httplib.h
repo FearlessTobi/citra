@@ -41,7 +41,7 @@
 #endif
 
 #ifndef CPPHTTPLIB_PAYLOAD_MAX_LENGTH
-#define CPPHTTPLIB_PAYLOAD_MAX_LENGTH (std::numeric_limits<size_t>::max)()
+#define CPPHTTPLIB_PAYLOAD_MAX_LENGTH (std::numeric_limits<size_t>::max())
 #endif
 
 #ifndef CPPHTTPLIB_RECV_BUFSIZ
@@ -49,12 +49,8 @@
 #endif
 
 #ifndef CPPHTTPLIB_THREAD_POOL_COUNT
-// if hardware_concurrency() outputs 0 we still wants to use threads for this.
-// -1 because we have one thread already in the main function.
 #define CPPHTTPLIB_THREAD_POOL_COUNT                                           \
-  (std::thread::hardware_concurrency()                                         \
-       ? std::thread::hardware_concurrency() - 1                               \
-       : 2)
+  (std::max(1u, std::thread::hardware_concurrency() - 1))
 #endif
 
 /*
@@ -448,6 +444,8 @@ public:
   using Handler = std::function<void(const Request &, Response &)>;
   using HandlerWithContentReader = std::function<void(
       const Request &, Response &, const ContentReader &content_reader)>;
+  using Expect100ContinueHandler =
+      std::function<int(const Request &, Response &)>;
 
   Server();
 
@@ -475,6 +473,8 @@ public:
 
   void set_error_handler(Handler handler);
   void set_logger(Logger logger);
+
+  void set_expect_100_continue_handler(Expect100ContinueHandler handler);
 
   void set_keep_alive_max_count(size_t count);
   void set_read_timeout(time_t sec, time_t usec);
@@ -553,6 +553,7 @@ private:
   Handlers options_handlers_;
   Handler error_handler_;
   Logger logger_;
+  Expect100ContinueHandler expect_100_continue_handler_;
 };
 
 class Client {
@@ -1544,7 +1545,7 @@ inline std::string get_remote_addr(socket_t sock) {
     std::array<char, NI_MAXHOST> ipstr{};
 
     if (!getnameinfo(reinterpret_cast<struct sockaddr *>(&addr), len,
-                     ipstr.data(), ipstr.size(), nullptr, 0, NI_NUMERICHOST)) {
+                     ipstr.data(), static_cast<unsigned int>(ipstr.size()), nullptr, 0, NI_NUMERICHOST)) {
       return ipstr.data();
     }
   }
@@ -1594,6 +1595,7 @@ find_content_type(const std::string &path,
 
 inline const char *status_message(int status) {
   switch (status) {
+  case 100: return "Continue";
   case 200: return "OK";
   case 202: return "Accepted";
   case 204: return "No Content";
@@ -1610,6 +1612,7 @@ inline const char *status_message(int status) {
   case 414: return "Request-URI Too Long";
   case 415: return "Unsupported Media Type";
   case 416: return "Range Not Satisfiable";
+  case 417: return "Expectation Failed";
   case 503: return "Service Unavailable";
 
   default:
@@ -2069,11 +2072,11 @@ inline void parse_query_text(const std::string &s, Params &params) {
   split(&s[0], &s[s.size()], '&', [&](const char *b, const char *e) {
     std::string key;
     std::string val;
-    split(b, e, '=', [&](const char *b, const char *e) {
+    split(b, e, '=', [&](const char *b2, const char *e2) {
       if (key.empty()) {
-        key.assign(b, e);
+        key.assign(b2, e2);
       } else {
-        val.assign(b, e);
+        val.assign(b2, e2);
       }
     });
     params.emplace(key, decode_url(val));
@@ -2099,16 +2102,16 @@ inline bool parse_range_header(const std::string &s, Ranges &ranges) {
     split(&s[pos], &s[pos + len], ',', [&](const char *b, const char *e) {
       if (!all_valid_ranges) return;
       static auto re_another_range = std::regex(R"(\s*(\d*)-(\d*))");
-      std::cmatch m;
-      if (std::regex_match(b, e, m, re_another_range)) {
+      std::cmatch cm;
+      if (std::regex_match(b, e, cm, re_another_range)) {
         ssize_t first = -1;
-        if (!m.str(1).empty()) {
-          first = static_cast<ssize_t>(std::stoll(m.str(1)));
+        if (!cm.str(1).empty()) {
+          first = static_cast<ssize_t>(std::stoll(cm.str(1)));
         }
 
         ssize_t last = -1;
-        if (!m.str(2).empty()) {
-          last = static_cast<ssize_t>(std::stoll(m.str(2)));
+        if (!cm.str(2).empty()) {
+          last = static_cast<ssize_t>(std::stoll(cm.str(2)));
         }
 
         if (first != -1 && last != -1 && first > last) {
@@ -2576,10 +2579,10 @@ inline std::pair<std::string, std::string> make_digest_authentication_header(
 inline bool parse_www_authenticate(const httplib::Response &res,
                                    std::map<std::string, std::string> &auth,
                                    bool is_proxy) {
-  auto key = is_proxy ? "Proxy-Authenticate" : "WWW-Authenticate";
-  if (res.has_header(key)) {
+  auto auth_key = is_proxy ? "Proxy-Authenticate" : "WWW-Authenticate";
+  if (res.has_header(auth_key)) {
     static auto re = std::regex(R"~((?:(?:,\s*)?(.+?)=(?:"(.*?)"|([^,]*))))~");
-    auto s = res.get_header_value(key);
+    auto s = res.get_header_value(auth_key);
     auto pos = s.find(' ');
     if (pos != std::string::npos) {
       auto type = s.substr(0, pos);
@@ -2710,11 +2713,11 @@ inline void Response::set_content(const std::string &s,
 }
 
 inline void Response::set_content_provider(
-    size_t length,
+    size_t in_length,
     std::function<void(size_t offset, size_t length, DataSink &sink)> provider,
     std::function<void()> resource_releaser) {
-  assert(length > 0);
-  content_length = length;
+  assert(in_length > 0);
+  content_length = in_length;
   content_provider = [provider](size_t offset, size_t length, DataSink &sink) {
     provider(offset, length, sink);
   };
@@ -2931,6 +2934,11 @@ inline void Server::set_error_handler(Handler handler) {
 
 inline void Server::set_logger(Logger logger) { logger_ = std::move(logger); }
 
+inline void
+Server::set_expect_100_continue_handler(Expect100ContinueHandler handler) {
+  expect_100_continue_handler_ = std::move(handler);
+}
+
 inline void Server::set_keep_alive_max_count(size_t count) {
   keep_alive_max_count_ = count;
 }
@@ -2997,9 +3005,11 @@ inline bool Server::write_response(Stream &strm, bool last_connection,
 
   if (400 <= res.status && error_handler_) { error_handler_(req, res); }
 
+  detail::BufferStream bstrm;
+
   // Response line
-  if (!strm.write_format("HTTP/1.1 %d %s\r\n", res.status,
-                         detail::status_message(res.status))) {
+  if (!bstrm.write_format("HTTP/1.1 %d %s\r\n", res.status,
+                          detail::status_message(res.status))) {
     return false;
   }
 
@@ -3012,11 +3022,12 @@ inline bool Server::write_response(Stream &strm, bool last_connection,
     res.set_header("Connection", "Keep-Alive");
   }
 
-  if (!res.has_header("Content-Type")) {
+  if (!res.has_header("Content-Type") &&
+      (!res.body.empty() || res.content_length > 0)) {
     res.set_header("Content-Type", "text/plain");
   }
 
-  if (!res.has_header("Accept-Ranges")) {
+  if (!res.has_header("Accept-Ranges") && req.method == "HEAD") {
     res.set_header("Accept-Ranges", "bytes");
   }
 
@@ -3093,7 +3104,11 @@ inline bool Server::write_response(Stream &strm, bool last_connection,
     res.set_header("Content-Length", length);
   }
 
-  if (!detail::write_headers(strm, res, Headers())) { return false; }
+  if (!detail::write_headers(bstrm, res, Headers())) { return false; }
+
+  // Flush buffer
+  auto &data = bstrm.get_buffer();
+  strm.write(data.data(), data.size());
 
   // Body
   if (req.method != "HEAD") {
@@ -3490,6 +3505,21 @@ Server::process_request(Stream &strm, bool last_connection,
   }
 
   if (setup_request) { setup_request(req); }
+
+  if (req.get_header_value("Expect") == "100-continue") {
+    auto status = 100;
+    if (expect_100_continue_handler_) {
+      status = expect_100_continue_handler_(req, res);
+    }
+    switch (status) {
+    case 100:
+    case 417:
+      strm.write_format("HTTP/1.1 %d %s\r\n\r\n", status,
+                        detail::status_message(status));
+      break;
+    default: return write_response(strm, last_connection, req, res);
+    }
+  }
 
   // Rounting
   if (routing(req, res, strm, last_connection)) {
