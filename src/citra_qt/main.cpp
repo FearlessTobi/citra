@@ -373,26 +373,72 @@ void GMainWindow::InitializeRecentFileMenuActions() {
 void GMainWindow::InitializeHotkeys() {
     hotkey_registry.LoadHotkeys();
 
+    const QString main_window = QStringLiteral("Main Window");
+    const QString load_file = QStringLiteral("Load File");
+    const QString load_amiibo = QStringLiteral("Load Amiibo");
+    const QString remove_amiibo = QStringLiteral("Remove Amiibo");
+    const QString exit_citra = QStringLiteral("Exit Citra");
+    const QString restart_emulation = QStringLiteral("Restart Emulation");
+    const QString stop_emulation = QStringLiteral("Stop Emulation");
+    const QString toggle_filter_bar = QStringLiteral("Toggle Filter Bar");
+    const QString toggle_status_bar = QStringLiteral("Toggle Status Bar");
+    const QString fullscreen = QStringLiteral("Fullscreen");
+    const QString capture_screenshot = QStringLiteral("Capture Screenshot");
+
+    ui.action_Capture_Screenshot->setShortcut(
+        hotkey_registry.GetKeySequence(main_window, capture_screenshot));
+    ui.action_Capture_Screenshot->setShortcutContext(
+        hotkey_registry.GetShortcutContext(main_window, capture_screenshot));
+
+    ui.action_Load_File->setShortcut(hotkey_registry.GetKeySequence(main_window, load_file));
+    ui.action_Load_File->setShortcutContext(
+        hotkey_registry.GetShortcutContext(main_window, load_file));
+
+    ui.action_Load_Amiibo->setShortcut(hotkey_registry.GetKeySequence(main_window, load_amiibo));
+    ui.action_Load_Amiibo->setShortcutContext(
+        hotkey_registry.GetShortcutContext(main_window, load_amiibo));
+
+    ui.action_Remove_Amiibo->setShortcut(
+        hotkey_registry.GetKeySequence(main_window, remove_amiibo));
+    ui.action_Remove_Amiibo->setShortcutContext(
+        hotkey_registry.GetShortcutContext(main_window, remove_amiibo));
+
+    ui.action_Exit->setShortcut(hotkey_registry.GetKeySequence(main_window, exit_citra));
+    ui.action_Exit->setShortcutContext(hotkey_registry.GetShortcutContext(main_window, exit_citra));
+
+    ui.action_Restart->setShortcut(hotkey_registry.GetKeySequence(main_window, restart_emulation));
+    ui.action_Restart->setShortcutContext(
+        hotkey_registry.GetShortcutContext(main_window, restart_emulation));
+
+    ui.action_Stop->setShortcut(hotkey_registry.GetKeySequence(main_window, stop_emulation));
+    ui.action_Stop->setShortcutContext(
+        hotkey_registry.GetShortcutContext(main_window, stop_emulation));
+
     ui.action_Show_Filter_Bar->setShortcut(
-        hotkey_registry.GetKeySequence("Main Window", "Toggle Filter Bar"));
+        hotkey_registry.GetKeySequence(main_window, toggle_filter_bar));
     ui.action_Show_Filter_Bar->setShortcutContext(
-        hotkey_registry.GetShortcutContext("Main Window", "Toggle Filter Bar"));
+        hotkey_registry.GetShortcutContext(main_window, toggle_filter_bar));
 
     ui.action_Show_Status_Bar->setShortcut(
-        hotkey_registry.GetKeySequence("Main Window", "Toggle Status Bar"));
+        hotkey_registry.GetKeySequence(main_window, toggle_status_bar));
     ui.action_Show_Status_Bar->setShortcutContext(
-        hotkey_registry.GetShortcutContext("Main Window", "Toggle Status Bar"));
+        hotkey_registry.GetShortcutContext(main_window, toggle_status_bar));
 
-    connect(hotkey_registry.GetHotkey("Main Window", "Load File", this), &QShortcut::activated,
+    ui.action_Capture_Screenshot->setShortcut(
+        hotkey_registry.GetKeySequence(main_window, capture_screenshot));
+    ui.action_Capture_Screenshot->setShortcutContext(
+        hotkey_registry.GetShortcutContext(main_window, capture_screenshot));
+
+    connect(hotkey_registry.GetHotkey(main_window, load_file, this), &QShortcut::activated,
             ui.action_Load_File, &QAction::trigger);
 
-    connect(hotkey_registry.GetHotkey("Main Window", "Stop Emulation", this), &QShortcut::activated,
+    connect(hotkey_registry.GetHotkey(main_window, stop_emulation, this), &QShortcut::activated,
             ui.action_Stop, &QAction::trigger);
 
-    connect(hotkey_registry.GetHotkey("Main Window", "Exit Citra", this), &QShortcut::activated,
+    connect(hotkey_registry.GetHotkey(main_window, exit_citra, this), &QShortcut::activated,
             ui.action_Exit, &QAction::trigger);
 
-    connect(hotkey_registry.GetHotkey("Main Window", "Continue/Pause Emulation", this),
+    connect(hotkey_registry.GetHotkey(main_window, "Continue/Pause Emulation", this),
             &QShortcut::activated, this, [&] {
                 if (emulation_running) {
                     if (emu_thread->IsRunning()) {
@@ -402,70 +448,70 @@ void GMainWindow::InitializeHotkeys() {
                     }
                 }
             });
-    connect(hotkey_registry.GetHotkey("Main Window", "Restart Emulation", this),
-            &QShortcut::activated, this, [this] {
+    connect(hotkey_registry.GetHotkey(main_window, restart_emulation, this), &QShortcut::activated,
+            this, [this] {
                 if (!Core::System::GetInstance().IsPoweredOn())
                     return;
                 BootGame(QString(game_path));
             });
-    connect(hotkey_registry.GetHotkey("Main Window", "Swap Screens", render_window),
+    connect(hotkey_registry.GetHotkey(main_window, "Swap Screens", render_window),
             &QShortcut::activated, ui.action_Screen_Layout_Swap_Screens, &QAction::trigger);
-    connect(hotkey_registry.GetHotkey("Main Window", "Toggle Screen Layout", render_window),
+    connect(hotkey_registry.GetHotkey(main_window, "Toggle Screen Layout", render_window),
             &QShortcut::activated, this, &GMainWindow::ToggleScreenLayout);
-    connect(hotkey_registry.GetHotkey("Main Window", "Fullscreen", render_window),
+    connect(hotkey_registry.GetHotkey(main_window, fullscreen, render_window),
             &QShortcut::activated, ui.action_Fullscreen, &QAction::trigger);
-    connect(hotkey_registry.GetHotkey("Main Window", "Fullscreen", render_window),
+    connect(hotkey_registry.GetHotkey(main_window, fullscreen, render_window),
             &QShortcut::activatedAmbiguously, ui.action_Fullscreen, &QAction::trigger);
-    connect(hotkey_registry.GetHotkey("Main Window", "Exit Fullscreen", this),
-            &QShortcut::activated, this, [&] {
+    connect(hotkey_registry.GetHotkey(main_window, "Exit Fullscreen", this), &QShortcut::activated,
+            this, [&] {
                 if (emulation_running) {
                     ui.action_Fullscreen->setChecked(false);
                     ToggleFullscreen();
                 }
             });
-    connect(hotkey_registry.GetHotkey("Main Window", "Toggle Speed Limit", this),
+    connect(hotkey_registry.GetHotkey(main_window, "Toggle Speed Limit", this),
             &QShortcut::activated, this, [&] {
                 Settings::values.use_frame_limit = !Settings::values.use_frame_limit;
                 UpdateStatusBar();
             });
-    connect(hotkey_registry.GetHotkey("Main Window", "Toggle Texture Dumping", this),
+    connect(hotkey_registry.GetHotkey(main_window, "Toggle Texture Dumping", this),
             &QShortcut::activated, this,
             [&] { Settings::values.dump_textures = !Settings::values.dump_textures; });
     // We use "static" here in order to avoid capturing by lambda due to a MSVC bug, which makes
     // the variable hold a garbage value after this function exits
     static constexpr u16 SPEED_LIMIT_STEP = 5;
-    connect(hotkey_registry.GetHotkey("Main Window", "Increase Speed Limit", this),
+    connect(hotkey_registry.GetHotkey(main_window, "Increase Speed Limit", this),
             &QShortcut::activated, this, [&] {
                 if (Settings::values.frame_limit < 9999 - SPEED_LIMIT_STEP) {
                     Settings::values.frame_limit += SPEED_LIMIT_STEP;
                     UpdateStatusBar();
                 }
             });
-    connect(hotkey_registry.GetHotkey("Main Window", "Decrease Speed Limit", this),
+    connect(hotkey_registry.GetHotkey(main_window, "Decrease Speed Limit", this),
             &QShortcut::activated, this, [&] {
                 if (Settings::values.frame_limit > SPEED_LIMIT_STEP) {
                     Settings::values.frame_limit -= SPEED_LIMIT_STEP;
                     UpdateStatusBar();
                 }
             });
-    connect(hotkey_registry.GetHotkey("Main Window", "Toggle Frame Advancing", this),
+    connect(hotkey_registry.GetHotkey(main_window, "Toggle Frame Advancing", this),
             &QShortcut::activated, ui.action_Enable_Frame_Advancing, &QAction::trigger);
-    connect(hotkey_registry.GetHotkey("Main Window", "Advance Frame", this), &QShortcut::activated,
+    connect(hotkey_registry.GetHotkey(main_window, "Advance Frame", this), &QShortcut::activated,
             ui.action_Advance_Frame, &QAction::trigger);
-    connect(hotkey_registry.GetHotkey("Main Window", "Load Amiibo", this), &QShortcut::activated,
-            this, [&] {
+    connect(hotkey_registry.GetHotkey(main_window, load_amiibo, this), &QShortcut::activated, this,
+            [&] {
                 if (ui.action_Load_Amiibo->isEnabled()) {
                     OnLoadAmiibo();
                 }
             });
-    connect(hotkey_registry.GetHotkey("Main Window", "Remove Amiibo", this), &QShortcut::activated,
+    connect(hotkey_registry.GetHotkey(main_window, remove_amiibo, this), &QShortcut::activated,
             this, [&] {
                 if (ui.action_Remove_Amiibo->isEnabled()) {
                     OnRemoveAmiibo();
                 }
             });
-    connect(hotkey_registry.GetHotkey("Main Window", "Capture Screenshot", this),
-            &QShortcut::activated, this, [&] {
+    connect(hotkey_registry.GetHotkey(main_window, capture_screenshot, this), &QShortcut::activated,
+            this, [&] {
                 if (emu_thread->IsRunning()) {
                     OnCaptureScreenshot();
                 }
