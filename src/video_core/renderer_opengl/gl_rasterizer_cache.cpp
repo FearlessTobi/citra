@@ -934,7 +934,7 @@ void CachedSurface::DumpTexture(GLuint target_tex, u64 tex_hash) {
            desktop and ES.
         */
         GetTexImageOES(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, height, width, 0,
-                       &decoded_texture[0], decoded_texture.size());
+                       &decoded_texture[0], static_cast<GLint>(decoded_texture.size()));
         glBindTexture(GL_TEXTURE_2D, 0);
         Common::FlipRGBA8Texture(decoded_texture, width, height);
         if (!image_interface->EncodePNG(dump_path, decoded_texture, width, height))
@@ -1090,7 +1090,7 @@ void CachedSurface::DownloadGLTexture(const Common::Rectangle<u32>& rect, GLuint
         if (GLES) {
             GetTexImageOES(GL_TEXTURE_2D, 0, tuple.format, tuple.type, rect.GetHeight(),
                            rect.GetWidth(), 0, &gl_buffer[buffer_offset],
-                           gl_buffer_size - buffer_offset);
+                           static_cast<GLint>(gl_buffer_size - buffer_offset));
         } else {
             glGetTexImage(GL_TEXTURE_2D, 0, tuple.format, tuple.type, &gl_buffer[buffer_offset]);
         }

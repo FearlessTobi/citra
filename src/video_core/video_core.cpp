@@ -76,7 +76,7 @@ void RequestScreenshot(void* data, std::function<void()> callback,
 
 u16 GetResolutionScaleFactor() {
     if (g_hw_renderer_enabled) {
-        return Settings::values.resolution_factor
+        return Settings::values.resolution_factor != 0
                    ? Settings::values.resolution_factor
                    : g_renderer->GetRenderWindow().GetFramebufferLayout().GetScalingRatio();
     } else {
