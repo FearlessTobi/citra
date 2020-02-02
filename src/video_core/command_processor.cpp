@@ -436,7 +436,8 @@ static void WritePicaReg(u32 id, u32 value, u32 mask) {
         unsigned index = (id - PICA_REG_INDEX(gs.int_uniforms[0]));
         auto values = regs.gs.int_uniforms[index];
         WriteUniformIntReg(g_state.gs, index,
-                           Common::Vec4<u8>(values.x, values.y, values.z, values.w));
+                           Common::Vec4<u8>(static_cast<u8>(values.x), static_cast<u8>(values.y),
+                                            static_cast<u8>(values.z), static_cast<u8>(values.w)));
         break;
     }
 
@@ -504,7 +505,8 @@ static void WritePicaReg(u32 id, u32 value, u32 mask) {
         unsigned index = (id - PICA_REG_INDEX(vs.int_uniforms[0]));
         auto values = regs.vs.int_uniforms[index];
         WriteUniformIntReg(g_state.vs, index,
-                           Common::Vec4<u8>(values.x, values.y, values.z, values.w));
+                           Common::Vec4<u8>(static_cast<u8>(values.x), static_cast<u8>(values.y),
+                                            static_cast<u8>(values.z), static_cast<u8>(values.w)));
         break;
     }
 

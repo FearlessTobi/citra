@@ -78,7 +78,8 @@ u16 GetResolutionScaleFactor() {
     if (g_hw_renderer_enabled) {
         return Settings::values.resolution_factor != 0
                    ? Settings::values.resolution_factor
-                   : g_renderer->GetRenderWindow().GetFramebufferLayout().GetScalingRatio();
+                   : static_cast<u16>(
+                         g_renderer->GetRenderWindow().GetFramebufferLayout().GetScalingRatio());
     } else {
         // Software renderer always render at native resolution
         return 1;

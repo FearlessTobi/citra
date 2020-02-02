@@ -86,9 +86,9 @@ union ETC1Tile {
                 ret.g() += static_cast<int>(differential.dg);
                 ret.b() += static_cast<int>(differential.db);
             }
-            ret.r() = Color::Convert5To8(ret.r());
-            ret.g() = Color::Convert5To8(ret.g());
-            ret.b() = Color::Convert5To8(ret.b());
+            ret.r() = Color::Convert5To8(static_cast<u8>(ret.r()));
+            ret.g() = Color::Convert5To8(static_cast<u8>(ret.g()));
+            ret.b() = Color::Convert5To8(static_cast<u8>(ret.b()));
         } else {
             if (x < 2) {
                 ret.r() = Color::Convert4To8(static_cast<u8>(separate.r1));
