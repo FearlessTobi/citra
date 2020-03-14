@@ -51,6 +51,24 @@ struct Frame {
 
 namespace OpenGL {
 
+/// Returns true if any debug tool is attached
+bool HasDebugTool() {
+    const bool nsight = std::getenv("NVTX_INJECTION64_PATH") || std::getenv("NSIGHT_LAUNCHED");
+    if (nsight) {
+        return true;
+    }
+
+    GLint num_extensions;
+    glGetIntegerv(GL_NUM_EXTENSIONS, &num_extensions);
+    for (GLuint index = 0; index < static_cast<GLuint>(num_extensions); ++index) {
+        const auto name = reinterpret_cast<const char*>(glGetStringi(GL_EXTENSIONS, index));
+        if (!std::strcmp(name, "GL_EXT_debug_tool")) {
+            return true;
+        }
+    }
+    return false;
+}
+
 // If the size of this is too small, it ends up creating a soft cap on FPS as the renderer will have
 // to wait on available presentation frames. There doesn't seem to be much of a downside to a larger
 // number but 9 swap textures at 60FPS presentation allows for 800% speed so thats probably fine
@@ -66,7 +84,7 @@ public:
     std::deque<Frontend::Frame*> present_queue;
     Frontend::Frame* previous_frame = nullptr;
 
-    OGLTextureMailbox() {
+    OGLTextureMailbox() : has_debug_tool{HasDebugTool()} {
         for (auto& frame : swap_chain) {
             free_queue.push(&frame);
         }
@@ -143,9 +161,13 @@ public:
         std::unique_lock lock{swap_chain_lock};
         present_queue.push_front(frame);
         present_cv.notify_one();
+
+        DebugNotifyNextFrame();
     }
 
     Frontend::Frame* TryGetPresentFrame(int timeout_ms) override {
+        DebugWaitForNextFrame();
+
         std::unique_lock lock{swap_chain_lock};
         // wait for new entries in the present_queue
         present_cv.wait_for(lock, std::chrono::milliseconds(timeout_ms),
@@ -170,6 +192,33 @@ public:
         present_queue.clear();
         previous_frame = frame;
         return frame;
+    }
+
+private:
+    std::mutex debug_synch_mutex;
+    std::condition_variable debug_synch_condition;
+    std::atomic_int frame_for_debug{};
+    const bool has_debug_tool; // When true, using a GPU debugger, so keep frames in lock-step
+
+    /// Signal that a new frame is available (called from GPU thread)
+    void DebugNotifyNextFrame() {
+        if (!has_debug_tool) {
+            return;
+        }
+        frame_for_debug++;
+        std::lock_guard lock{debug_synch_mutex};
+        debug_synch_condition.notify_one();
+    }
+
+    /// Wait for a new frame to be available (called from presentation thread)
+    void DebugWaitForNextFrame() {
+        if (!has_debug_tool) {
+            return;
+        }
+        const int last_frame = frame_for_debug;
+        std::unique_lock lock{debug_synch_mutex};
+        debug_synch_condition.wait(lock,
+                                   [this, last_frame] { return frame_for_debug > last_frame; });
     }
 };
 
