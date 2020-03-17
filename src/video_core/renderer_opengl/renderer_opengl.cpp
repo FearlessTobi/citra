@@ -62,8 +62,8 @@ public:
     std::condition_variable free_cv;
     std::condition_variable present_cv;
     std::array<Frontend::Frame, SWAP_CHAIN_SIZE> swap_chain{};
-    std::queue<Frontend::Frame*> free_queue{};
-    std::deque<Frontend::Frame*> present_queue{};
+    std::queue<Frontend::Frame*> free_queue;
+    std::deque<Frontend::Frame*> present_queue;
     Frontend::Frame* previous_frame = nullptr;
 
     OGLTextureMailbox() {
@@ -75,7 +75,7 @@ public:
     ~OGLTextureMailbox() override {
         // lock the mutex and clear out the present and free_queues and notify any people who are
         // blocked to prevent deadlock on shutdown
-        std::scoped_lock lock(swap_chain_lock);
+        std::scoped_lock lock{swap_chain_lock};
         std::queue<Frontend::Frame*>().swap(free_queue);
         present_queue.clear();
         present_cv.notify_all();
@@ -89,7 +89,7 @@ public:
         glBindFramebuffer(GL_FRAMEBUFFER, frame->present.handle);
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER,
                                   frame->color.handle);
-        if (!glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE) {
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
             LOG_CRITICAL(Render_OpenGL, "Failed to recreate present FBO!");
         }
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, previous_draw_fbo);
@@ -125,7 +125,7 @@ public:
     }
 
     Frontend::Frame* GetRenderFrame() override {
-        std::unique_lock<std::mutex> lock(swap_chain_lock);
+        std::unique_lock lock{swap_chain_lock};
 
         // If theres no free frames, we will reuse the oldest render frame
         if (free_queue.empty()) {
@@ -140,13 +140,13 @@ public:
     }
 
     void ReleaseRenderFrame(Frontend::Frame* frame) override {
-        std::unique_lock<std::mutex> lock(swap_chain_lock);
+        std::unique_lock lock{swap_chain_lock};
         present_queue.push_front(frame);
         present_cv.notify_one();
     }
 
     Frontend::Frame* TryGetPresentFrame(int timeout_ms) override {
-        std::unique_lock<std::mutex> lock(swap_chain_lock);
+        std::unique_lock lock{swap_chain_lock};
         // wait for new entries in the present_queue
         present_cv.wait_for(lock, std::chrono::milliseconds(timeout_ms),
                             [&] { return !present_queue.empty(); });
@@ -351,7 +351,6 @@ void RendererOpenGL::SwapBuffers() {
             render_window.mailbox->ReloadRenderFrame(frame, layout.width, layout.height);
         }
 
-        GLuint render_texture = frame->color.handle;
         state.draw.draw_framebuffer = frame->render.handle;
         state.Apply();
         DrawScreens(layout);

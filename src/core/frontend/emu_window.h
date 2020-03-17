@@ -161,7 +161,7 @@ public:
      */
     void UpdateCurrentFramebufferLayout(unsigned width, unsigned height);
 
-    std::unique_ptr<TextureMailbox> mailbox = nullptr;
+    std::unique_ptr<TextureMailbox> mailbox;
 
 protected:
     EmuWindow();

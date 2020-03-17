@@ -340,6 +340,7 @@ void OpenGLState::Apply() const {
     }
 
     if (renderbuffer != cur_state.renderbuffer) {
+        cur_state.renderbuffer = renderbuffer;
         glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
     }
 
