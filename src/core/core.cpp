@@ -236,6 +236,10 @@ PerfStats::Results System::GetAndResetPerfStats() {
     return perf_stats->GetAndResetStats(timing->GetGlobalTimeUs());
 }
 
+double System::GetLastFrameTimeScale() {
+    return perf_stats->GetLastFrameTimeScale();
+}
+
 void System::Reschedule() {
     if (!reschedule_pending) {
         return;
