@@ -155,6 +155,8 @@ ConfigureInput::ConfigureInput(QWidget* parent)
     }};
 
     analog_map_stick = {ui->buttonCircleAnalog, ui->buttonCStickAnalog};
+    analog_map_deadzone = {ui->sliderCirclePadDeadzone, ui->sliderCStickDeadzone};
+    analog_map_deadzone_label = {ui->labelCirclePadDeadzone, ui->labelCStickDeadzone};
 
     for (int button_id = 0; button_id < Settings::NativeButton::NumButtons; button_id++) {
         if (!button_map[button_id])
@@ -244,6 +246,11 @@ ConfigureInput::ConfigureInput(QWidget* parent)
                             },
                             InputCommon::Polling::DeviceType::Analog);
             }
+        });
+        connect(analog_map_deadzone[analog_id], &QSlider::valueChanged, [=] {
+            const float deadzone = analog_map_deadzone[analog_id]->value() / 100.0f;
+            analog_map_deadzone_label[analog_id]->setText(tr("Deadzone: %1").arg(deadzone));
+            analogs_param[analog_id].Set("deadzone", deadzone);
         });
     }
 
@@ -363,7 +370,7 @@ void ConfigureInput::ClearAll() {
         for (int sub_button_id = 0; sub_button_id < ANALOG_SUB_BUTTONS_NUM; sub_button_id++) {
             if (analog_map_buttons[analog_id][sub_button_id] &&
                 analog_map_buttons[analog_id][sub_button_id]->isEnabled())
-                analogs_param[analog_id].Erase(analog_sub_buttons[sub_button_id]);
+                analogs_param[analog_id].Clear();
         }
     }
     UpdateButtonLabels();
@@ -383,6 +390,23 @@ void ConfigureInput::UpdateButtonLabels() {
             }
         }
         analog_map_stick[analog_id]->setText(tr("Set Analog Stick"));
+
+        auto& param = analogs_param[analog_id];
+        auto* const analog_deadzone_slider = analog_map_deadzone[analog_id];
+        auto* const analog_deadzone_label = analog_map_deadzone_label[analog_id];
+
+        if (param.Has("engine") && param.Get("engine", "") == "sdl") {
+            if (!param.Has("deadzone")) {
+                param.Set("deadzone", 0.1f);
+            }
+
+            analog_deadzone_slider->setValue(static_cast<int>(param.Get("deadzone", 0.1f) * 100));
+            analog_deadzone_slider->setVisible(true);
+            analog_deadzone_label->setVisible(true);
+        } else {
+            analog_deadzone_slider->setVisible(false);
+            analog_deadzone_label->setVisible(false);
+        }
     }
 
     EmitInputKeysChanged();
