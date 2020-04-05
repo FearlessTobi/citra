@@ -87,7 +87,7 @@ ResultCode SoftwareKeyboard::ReceiveParameter(Service::APT::MessageParameter con
         LOG_ERROR(Service_APT, "unsupported signal {}", static_cast<u32>(parameter.signal));
         UNIMPLEMENTED();
         // TODO(Subv): Find the right error code
-        return ResultCode(-1);
+        return RESULT_UNKNOWN;
     }
     }
 }

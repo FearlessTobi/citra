@@ -252,7 +252,7 @@ ResultCode ArchiveManager::DeleteExtSaveData(MediaType media_type, u32 high, u32
         media_type_directory = FileUtil::GetUserPath(FileUtil::UserPath::SDMCDir);
     } else {
         LOG_ERROR(Service_FS, "Unsupported media type {}", static_cast<u32>(media_type));
-        return ResultCode(-1); // TODO(Subv): Find the right error code
+        return RESULT_UNKNOWN; // TODO(Subv): Find the right error code
     }
 
     // Delete all directories (/user, /boss) and the icon file.
@@ -260,7 +260,7 @@ ResultCode ArchiveManager::DeleteExtSaveData(MediaType media_type, u32 high, u32
         FileSys::GetExtDataContainerPath(media_type_directory, media_type == MediaType::NAND);
     std::string extsavedata_path = FileSys::GetExtSaveDataPath(base_path, path);
     if (FileUtil::Exists(extsavedata_path) && !FileUtil::DeleteDirRecursively(extsavedata_path))
-        return ResultCode(-1); // TODO(Subv): Find the right error code
+        return RESULT_UNKNOWN; // TODO(Subv): Find the right error code
     return RESULT_SUCCESS;
 }
 
@@ -272,7 +272,7 @@ ResultCode ArchiveManager::DeleteSystemSaveData(u32 high, u32 low) {
     std::string base_path = FileSys::GetSystemSaveDataContainerPath(nand_directory);
     std::string systemsavedata_path = FileSys::GetSystemSaveDataPath(base_path, path);
     if (!FileUtil::DeleteDirRecursively(systemsavedata_path))
-        return ResultCode(-1); // TODO(Subv): Find the right error code
+        return RESULT_UNKNOWN; // TODO(Subv): Find the right error code
     return RESULT_SUCCESS;
 }
 
@@ -284,7 +284,7 @@ ResultCode ArchiveManager::CreateSystemSaveData(u32 high, u32 low) {
     std::string base_path = FileSys::GetSystemSaveDataContainerPath(nand_directory);
     std::string systemsavedata_path = FileSys::GetSystemSaveDataPath(base_path, path);
     if (!FileUtil::CreateFullPath(systemsavedata_path))
-        return ResultCode(-1); // TODO(Subv): Find the right error code
+        return RESULT_UNKNOWN; // TODO(Subv): Find the right error code
     return RESULT_SUCCESS;
 }
 

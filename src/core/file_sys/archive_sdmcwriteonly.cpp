@@ -85,14 +85,14 @@ ResultCode ArchiveFactory_SDMCWriteOnly::Format(const Path& path,
                                                 u64 program_id) {
     // TODO(wwylele): hwtest this
     LOG_ERROR(Service_FS, "Attempted to format a SDMC write-only archive.");
-    return ResultCode(-1);
+    return RESULT_UNKNOWN;
 }
 
 ResultVal<ArchiveFormatInfo> ArchiveFactory_SDMCWriteOnly::GetFormatInfo(const Path& path,
                                                                          u64 program_id) const {
     // TODO(Subv): Implement
     LOG_ERROR(Service_FS, "Unimplemented GetFormatInfo archive {}", GetName());
-    return ResultCode(-1);
+    return RESULT_UNKNOWN;
 }
 
 } // namespace FileSys

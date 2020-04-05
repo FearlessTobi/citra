@@ -14,7 +14,7 @@ ResultCode Mint::ReceiveParameter(const Service::APT::MessageParameter& paramete
         LOG_ERROR(Service_APT, "unsupported signal {}", static_cast<u32>(parameter.signal));
         UNIMPLEMENTED();
         // TODO(Subv): Find the right error code
-        return ResultCode(-1);
+        return RESULT_UNKNOWN;
     }
 
     // The Request message contains a buffer with the size of the framebuffer shared

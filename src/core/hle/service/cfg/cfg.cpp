@@ -370,7 +370,7 @@ ResultCode Module::SetConfigInfoBlock(u32 block_id, u32 size, u32 flag, const vo
 ResultCode Module::CreateConfigInfoBlk(u32 block_id, u16 size, u16 flags, const void* data) {
     SaveFileConfig* config = reinterpret_cast<SaveFileConfig*>(cfg_config_file_buffer.data());
     if (config->total_entries >= CONFIG_FILE_MAX_BLOCK_ENTRIES)
-        return ResultCode(-1); // TODO(Subv): Find the right error code
+        return RESULT_UNKNOWN; // TODO(Subv): Find the right error code
 
     // Insert the block header with offset 0 for now
     config->block_entries[config->total_entries] = {block_id, 0, size, flags};

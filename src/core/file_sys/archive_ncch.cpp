@@ -182,21 +182,21 @@ ResultCode NCCHArchive::DeleteFile(const Path& path) const {
 ResultCode NCCHArchive::RenameFile(const Path& src_path, const Path& dest_path) const {
     LOG_CRITICAL(Service_FS, "Attempted to rename a file within an NCCH archive ({}).", GetName());
     // TODO(wwylele): Use correct error code
-    return ResultCode(-1);
+    return RESULT_UNKNOWN;
 }
 
 ResultCode NCCHArchive::DeleteDirectory(const Path& path) const {
     LOG_CRITICAL(Service_FS, "Attempted to delete a directory from an NCCH archive ({}).",
                  GetName());
     // TODO(wwylele): Use correct error code
-    return ResultCode(-1);
+    return RESULT_UNKNOWN;
 }
 
 ResultCode NCCHArchive::DeleteDirectoryRecursively(const Path& path) const {
     LOG_CRITICAL(Service_FS, "Attempted to delete a directory from an NCCH archive ({}).",
                  GetName());
     // TODO(wwylele): Use correct error code
-    return ResultCode(-1);
+    return RESULT_UNKNOWN;
 }
 
 ResultCode NCCHArchive::CreateFile(const Path& path, u64 size) const {
@@ -209,20 +209,20 @@ ResultCode NCCHArchive::CreateFile(const Path& path, u64 size) const {
 ResultCode NCCHArchive::CreateDirectory(const Path& path) const {
     LOG_CRITICAL(Service_FS, "Attempted to create a directory in an NCCH archive ({}).", GetName());
     // TODO(wwylele): Use correct error code
-    return ResultCode(-1);
+    return RESULT_UNKNOWN;
 }
 
 ResultCode NCCHArchive::RenameDirectory(const Path& src_path, const Path& dest_path) const {
     LOG_CRITICAL(Service_FS, "Attempted to rename a file within an NCCH archive ({}).", GetName());
     // TODO(wwylele): Use correct error code
-    return ResultCode(-1);
+    return RESULT_UNKNOWN;
 }
 
 ResultVal<std::unique_ptr<DirectoryBackend>> NCCHArchive::OpenDirectory(const Path& path) const {
     LOG_CRITICAL(Service_FS, "Attempted to open a directory within an NCCH archive ({}).",
                  GetName().c_str());
     // TODO(shinyquagsire23): Use correct error code
-    return ResultCode(-1);
+    return RESULT_UNKNOWN;
 }
 
 u64 NCCHArchive::GetFreeBytes() const {
@@ -302,7 +302,7 @@ ResultVal<ArchiveFormatInfo> ArchiveFactory_NCCH::GetFormatInfo(const Path& path
                                                                 u64 program_id) const {
     // TODO(Subv): Implement
     LOG_ERROR(Service_FS, "Unimplemented GetFormatInfo archive {}", GetName());
-    return ResultCode(-1);
+    return RESULT_UNKNOWN;
 }
 
 } // namespace FileSys

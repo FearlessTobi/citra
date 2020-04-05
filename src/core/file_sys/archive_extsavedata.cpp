@@ -266,7 +266,7 @@ ResultCode ArchiveFactory_ExtSaveData::Format(const Path& path,
 
     if (!file.IsOpen()) {
         // TODO(Subv): Find the correct error code
-        return ResultCode(-1);
+        return RESULT_UNKNOWN;
     }
 
     file.WriteBytes(&format_info, sizeof(format_info));
