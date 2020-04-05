@@ -34,7 +34,7 @@ struct ThreadQueueList {
             }
         }
 
-        return -1;
+        return UINT_MAX;
     }
 
     T get_first() {
