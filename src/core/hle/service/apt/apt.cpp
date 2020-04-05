@@ -203,7 +203,7 @@ void Module::APTInterface::GetSharedFont(Kernel::HLERequestContext& ctx) {
             apt->shared_font_loaded = true;
         } else {
             LOG_ERROR(Service_APT, "shared font file missing - go dump it from your 3ds");
-            rb.Push<u32>(-1); // TODO: Find the right error code
+            rb.Push(RESULT_UNKNOWN); // TODO: Find the right error code
             rb.Push<u32>(0);
             rb.PushCopyObjects<Kernel::Object>(nullptr);
             apt->system.SetStatus(Core::System::ResultStatus::ErrorSystemFiles, "Shared fonts");

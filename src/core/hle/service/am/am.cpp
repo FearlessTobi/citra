@@ -582,7 +582,7 @@ void Module::Interface::FindDLCContentInfos(Kernel::HLERequestContext& ctx) {
                           content_requested[i]);
 
                 IPC::RequestBuilder rb = rp.MakeBuilder(1, 4);
-                rb.Push<u32>(-1); // TODO(Steveice10): Find the right error code
+                rb.Push(RESULT_UNKNOWN); // TODO(Steveice10): Find the right error code
                 rb.PushMappedBuffer(content_requested_in);
                 rb.PushMappedBuffer(content_info_out);
                 return;
@@ -688,7 +688,7 @@ void Module::Interface::GetProgramList(Kernel::HLERequestContext& ctx) {
 
     if (media_type > 2) {
         IPC::RequestBuilder rb = rp.MakeBuilder(2, 2);
-        rb.Push<u32>(-1); // TODO(shinyquagsire23): Find the right error code
+        rb.Push(RESULT_UNKNOWN); // TODO(shinyquagsire23): Find the right error code
         rb.Push<u32>(0);
         rb.PushMappedBuffer(title_ids_output);
         return;

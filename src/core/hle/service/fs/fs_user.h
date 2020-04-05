@@ -541,7 +541,7 @@ private:
      */
     void GetSaveDataSecureValue(Kernel::HLERequestContext& ctx);
 
-    u32 priority = -1; ///< For SetPriority and GetPriority service functions
+    u32 priority = UINT32_MAX; ///< For SetPriority and GetPriority service functions
 
     Core::System& system;
     ArchiveManager& archives;
