@@ -599,7 +599,7 @@ static u32 vfp_single_ftoui(ARMul_State* state, int sd, int unused, s32 m, u32 f
         } else if (rmode == FPSCR_ROUND_TOZERO) {
             incr = 0;
         } else if ((rmode == FPSCR_ROUND_PLUSINF) ^ (vsm.sign != 0)) {
-            incr = ~0;
+            incr = UINT32_MAX;
         }
 
         if ((rem + incr) < rem) {
@@ -688,7 +688,7 @@ static u32 vfp_single_ftosi(ARMul_State* state, int sd, int unused, s32 m, u32 f
         } else if (rmode == FPSCR_ROUND_TOZERO) {
             incr = 0;
         } else if ((rmode == FPSCR_ROUND_PLUSINF) ^ (vsm.sign != 0)) {
-            incr = ~0;
+            incr = UINT32_MAX;
         }
 
         if ((rem + incr) < rem && d < 0xffffffff)

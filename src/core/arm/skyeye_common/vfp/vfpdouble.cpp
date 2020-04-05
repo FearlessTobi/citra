@@ -1245,5 +1245,5 @@ u32 vfp_double_cpdo(ARMul_State* state, u32 inst, u32 fpscr) {
     return exceptions;
 
 invalid:
-    return ~0;
+    return UINT32_MAX;
 }
