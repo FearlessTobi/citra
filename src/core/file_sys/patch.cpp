@@ -15,8 +15,8 @@
 namespace FileSys::Patch {
 
 bool ApplyIpsPatch(const std::vector<u8>& ips, std::vector<u8>& buffer) {
-    u32 cursor = 5;
-    u32 patch_length = ips.size() - 3;
+    std::size_t cursor = 5;
+    std::size_t patch_length = ips.size() - 3;
     std::string ips_header(ips.begin(), ips.begin() + 5);
 
     if (ips_header != "PATCH") {
