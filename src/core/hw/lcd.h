@@ -41,12 +41,12 @@ struct Regs {
         return sizeof(Regs) / sizeof(u32);
     }
 
-    const u32& operator[](int index) const {
+    const u32& operator[](std::size_t index) const {
         const u32* content = reinterpret_cast<const u32*>(this);
         return content[index];
     }
 
-    u32& operator[](int index) {
+    u32& operator[](size_t index) {
         u32* content = reinterpret_cast<u32*>(this);
         return content[index];
     }

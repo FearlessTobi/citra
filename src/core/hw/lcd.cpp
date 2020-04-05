@@ -17,7 +17,7 @@ Regs g_regs;
 template <typename T>
 inline void Read(T& var, const u32 raw_addr) {
     u32 addr = raw_addr - HW::VADDR_LCD;
-    u32 index = addr / 4;
+    std::size_t index = addr / 4;
 
     // Reads other than u32 are untested, so I'd rather have them abort than silently fail
     if (index >= 0x400 || !std::is_same<T, u32>::value) {
@@ -25,7 +25,7 @@ inline void Read(T& var, const u32 raw_addr) {
         return;
     }
 
-    var = g_regs[index];
+    var = static_cast<T>(g_regs[index]);
 }
 
 template <typename T>

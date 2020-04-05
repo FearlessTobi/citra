@@ -178,7 +178,7 @@ public:
         return *cpu_cores[core_id];
     };
 
-    u32 GetNumCores() const {
+    std::size_t GetNumCores() const {
         return cpu_cores.size();
     }
 
