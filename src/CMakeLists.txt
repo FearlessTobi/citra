@@ -57,6 +57,7 @@ if (MSVC)
 else()
     add_compile_options(
         -Wall
+        -Wmissing-declarations
         -Wno-attributes
     )
 
