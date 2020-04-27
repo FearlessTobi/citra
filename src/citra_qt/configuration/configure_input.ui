@@ -453,14 +453,14 @@
          </layout>
         </item>
         <item row="3" column="1" colspan="2">
-         <layout class="QVBoxLayout" name="sliderCirclePadDeadzoneVerticalLayout">
+         <layout class="QVBoxLayout" name="sliderCirclePadDeadzoneAndModifierVerticalLayout">
           <item>
-           <layout class="QHBoxLayout" name="sliderCirclePadDeadzoneHorizontalLayout">
+           <layout class="QHBoxLayout" name="sliderCirclePadDeadzoneAndModifierHorizontalLayout">
             <property name="sizeConstraint">
              <enum>QLayout::SetDefaultConstraint</enum>
             </property>
             <item>
-             <widget class="QLabel" name="labelCirclePadDeadzone">
+             <widget class="QLabel" name="labelCirclePadDeadzoneAndModifier">
               <property name="text">
                <string>Deadzone: 0</string>
               </property>
@@ -472,7 +472,7 @@
            </layout>
           </item>
           <item>
-           <widget class="QSlider" name="sliderCirclePadDeadzone">
+           <widget class="QSlider" name="sliderCirclePadDeadzoneAndModifier">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
             </property>
@@ -575,14 +575,14 @@
          </layout>
         </item>
         <item row="3" column="0" colspan="2">
-         <layout class="QVBoxLayout" name="sliderCStickDeadzoneVerticalLayout">
+         <layout class="QVBoxLayout" name="sliderCStickDeadzoneAndModifierVerticalLayout">
           <property name="sizeConstraint">
            <enum>QLayout::SetDefaultConstraint</enum>
           </property>
           <item>
-           <layout class="QHBoxLayout" name="sliderCStickDeadzoneHorizontalLayout">
+           <layout class="QHBoxLayout" name="sliderCStickDeadzoneAndModifierHorizontalLayout">
             <item>
-             <widget class="QLabel" name="labelCStickDeadzone">
+             <widget class="QLabel" name="labelCStickDeadzoneAndModifier">
               <property name="text">
                <string>Deadzone: 0</string>
               </property>
@@ -594,7 +594,7 @@
            </layout>
           </item>
           <item>
-           <widget class="QSlider" name="sliderCStickDeadzone">
+           <widget class="QSlider" name="sliderCStickDeadzoneAndModifier">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
             </property>
