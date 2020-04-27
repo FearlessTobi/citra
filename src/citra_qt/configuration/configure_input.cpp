@@ -153,11 +153,11 @@ ConfigureInput::ConfigureInput(QWidget* parent)
         },
     }};
 
-    analog_mapand_modifier_stick = {ui->buttonCircleAnalog, ui->buttonCStickAnalog};
+    analog_map_stick = {ui->buttonCircleAnalog, ui->buttonCStickAnalog};
     analog_map_deadzone_and_modifier_slider = {ui->sliderCirclePadDeadzoneAndModifier,
                                                ui->sliderCStickDeadzoneAndModifier};
-    analog_map_deadzone_and_modifier_label = {ui->labelCirclePadDeadzoneAndModifier,
-                                              ui->labelCStickDeadzoneAndModifier};
+    analog_map_deadzone_and_modifier_slider_label = {ui->labelCirclePadDeadzoneAndModifier,
+                                                     ui->labelCStickDeadzoneAndModifier};
 
     for (int button_id = 0; button_id < Settings::NativeButton::NumButtons; button_id++) {
         if (!button_map[button_id])
@@ -375,11 +375,7 @@ void ConfigureInput::ClearAll() {
             buttons_param[button_id].Clear();
     }
     for (int analog_id = 0; analog_id < Settings::NativeAnalog::NumAnalogs; analog_id++) {
-        for (int sub_button_id = 0; sub_button_id < ANALOG_SUB_BUTTONS_NUM; sub_button_id++) {
-            if (analog_map_buttons[analog_id][sub_button_id] &&
-                analog_map_buttons[analog_id][sub_button_id]->isEnabled())
-                analogs_param[analog_id].Clear();
-        }
+        analogs_param[analog_id].Clear();
     }
     UpdateButtonLabels();
 }
