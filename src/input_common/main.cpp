@@ -17,7 +17,9 @@ namespace InputCommon {
 static std::shared_ptr<Keyboard> keyboard;
 static std::shared_ptr<MotionEmu> motion_emu;
 static std::unique_ptr<CemuhookUDP::State> udp;
+#ifdef HAVE_SDL2
 static std::unique_ptr<SDL::State> sdl;
+#endif
 
 void Init() {
     keyboard = std::make_shared<Keyboard>();
@@ -27,7 +29,9 @@ void Init() {
     motion_emu = std::make_shared<MotionEmu>();
     Input::RegisterFactory<Input::MotionDevice>("motion_emu", motion_emu);
 
+#ifdef HAVE_SDL2
     sdl = SDL::Init();
+#endif
 
     udp = CemuhookUDP::Init();
 }
@@ -38,7 +42,9 @@ void Shutdown() {
     Input::UnregisterFactory<Input::AnalogDevice>("analog_from_button");
     Input::UnregisterFactory<Input::MotionDevice>("motion_emu");
     motion_emu.reset();
+#ifdef HAVE_SDL2
     sdl.reset();
+#endif
     udp.reset();
 }
 
