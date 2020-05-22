@@ -55,22 +55,41 @@ constexpr u16 BroadcastNetworkNodeId = 0xFFFF;
 // The Host has always dest_node_id 1
 constexpr u16 HostDestNodeId = 1;
 
-std::list<Network::WifiPacket> NWM_UDS::GetReceivedBeacons(const MacAddress& sender) {
+std::list<Network::WifiPacket> NWM_UDS::GetReceivedBeacons(const MacAddress& sender,
+                                                           u32 wlan_comm_id) {
     std::lock_guard lock(beacon_mutex);
-    if (sender != Network::BroadcastMac) {
-        std::list<Network::WifiPacket> filtered_list;
-        const auto beacon = std::find_if(received_beacons.begin(), received_beacons.end(),
-                                         [&sender](const Network::WifiPacket& packet) {
-                                             return packet.transmitter_address == sender;
-                                         });
-        if (beacon != received_beacons.end()) {
-            filtered_list.push_back(*beacon);
-            // TODO(B3N30): Check if the complete deque is cleared or just the fetched entries
-            received_beacons.erase(beacon);
-        }
-        return filtered_list;
+    std::list<Network::WifiPacket> filtered_list;
+    const auto beacon = std::find_if(
+        received_beacons.begin(), received_beacons.end(), [&](const Network::WifiPacket& packet) {
+            if (packet.data.size() < sizeof(DecryptedBeacon)) {
+                return false;
+            }
+
+            DecryptedBeacon decrypted_beacon;
+            std::memcpy(&decrypted_beacon, packet.data.data(), sizeof(decrypted_beacon));
+
+            NetworkInfo beacon_network_info{};
+            // NetworkInfoTag.network_info starts at oui_value
+            std::memcpy(&beacon_network_info.oui_value,
+                        decrypted_beacon.network_info.network_info.data(),
+                        decrypted_beacon.network_info.network_info.size());
+
+            if (static_cast<u32>(beacon_network_info.wlan_comm_id) != wlan_comm_id) {
+                return false;
+            }
+
+            if (sender == Network::BroadcastMac) {
+                return true;
+            }
+
+            return packet.transmitter_address == sender;
+        });
+    if (beacon != received_beacons.end()) {
+        filtered_list.push_back(*beacon);
+        // TODO(B3N30): Check if the complete deque is cleared or just the fetched entries
+        received_beacons.erase(beacon);
     }
-    return std::move(received_beacons);
+    return filtered_list;
 }
 
 /// Sends a WifiPacket to the room we're currently connected to.
@@ -592,8 +611,9 @@ void NWM_UDS::RecvBeaconBroadcastData(Kernel::HLERequestContext& ctx) {
 
     std::size_t cur_buffer_size = sizeof(BeaconDataReplyHeader);
 
-    // Retrieve all beacon frames that were received from the desired mac address.
-    auto beacons = GetReceivedBeacons(mac_address);
+    // Retrieve all beacon frames that were received from the desired mac address and with the
+    // desired wlan_comm_id.
+    auto beacons = GetReceivedBeacons(mac_address, wlan_comm_id);
 
     BeaconDataReplyHeader data_reply_header{};
     data_reply_header.total_entries = static_cast<u32>(beacons.size());
