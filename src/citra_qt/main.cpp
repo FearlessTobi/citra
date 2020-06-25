@@ -570,6 +570,9 @@ void GMainWindow::InitializeHotkeys() {
             &QShortcut::activated, ui.action_Load_from_Newest_Slot, &QAction::trigger);
     connect(hotkey_registry.GetHotkey(main_window, ui.action_Save_to_Oldest_Slot->text(), this),
             &QShortcut::activated, ui.action_Save_to_Oldest_Slot, &QAction::trigger);
+    connect(hotkey_registry.GetHotkey(main_window, QStringLiteral("Mute Audio"), this),
+            &QShortcut::activated, this,
+            [] { Settings::values.audio_muted = !Settings::values.audio_muted; });
 }
 
 void GMainWindow::ShowUpdaterWidgets() {

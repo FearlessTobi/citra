@@ -121,6 +121,13 @@ void LogSettings() {
     LogSetting("Debugging_GdbstubPort", Settings::values.gdbstub_port);
 }
 
+float Volume() {
+    if (values.audio_muted) {
+        return 0.0f;
+    }
+    return values.volume;
+}
+
 void LoadProfile(int index) {
     Settings::values.current_input_profile = Settings::values.input_profiles[index];
     Settings::values.current_input_profile_index = index;

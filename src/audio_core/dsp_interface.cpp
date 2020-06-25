@@ -85,7 +85,7 @@ void DspInterface::OutputCallback(s16* buffer, std::size_t num_frames) {
     }
 
     // Implementation of the hardware volume slider with a dynamic range of 60 dB
-    const float linear_volume = std::clamp(Settings::values.volume, 0.0f, 1.0f);
+    const float linear_volume = std::clamp(Settings::Volume(), 0.0f, 1.0f);
     if (linear_volume != 1.0) {
         const float volume_scale_factor =
             linear_volume == 0 ? 0 : std::exp(6.90775f * linear_volume) * 0.001f;
