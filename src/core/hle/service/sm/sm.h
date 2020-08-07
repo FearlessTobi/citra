@@ -59,7 +59,7 @@ public:
     // For IPC Recorder
     std::string GetServiceNameByPortId(u32 port) const;
 
-    template <Common::IsBaseOf<Kernel::SessionRequestHandler> T>
+    template <Common::DerivedFrom<Kernel::SessionRequestHandler> T>
     std::shared_ptr<T> GetService(const std::string& service_name) const {
         auto service = registered_services.find(service_name);
         if (service == registered_services.end()) {
