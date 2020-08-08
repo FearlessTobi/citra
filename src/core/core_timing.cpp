@@ -47,8 +47,8 @@ TimingEventType* Timing::RegisterEvent(const std::string& name, TimedCallback ca
     return event_type;
 }
 
-void Timing::ScheduleEvent(s64 cycles_into_future, const TimingEventType* event_type, u64 userdata,
-                           std::size_t core_id) {
+void Timing::ScheduleEvent(s64 cycles_into_future, const TimingEventType* event_type,
+                           std::uintptr_t user_data, std::size_t core_id) {
     ASSERT(event_type != nullptr);
     Timing::Timer* timer = nullptr;
     if (core_id == std::numeric_limits<std::size_t>::max()) {
@@ -65,19 +65,19 @@ void Timing::ScheduleEvent(s64 cycles_into_future, const TimingEventType* event_
             timer->ForceExceptionCheck(cycles_into_future);
 
         timer->event_queue.emplace_back(
-            Event{timeout, timer->event_fifo_id++, userdata, event_type});
+            Event{timeout, timer->event_fifo_id++, user_data, event_type});
         std::push_heap(timer->event_queue.begin(), timer->event_queue.end(), std::greater<>());
     } else {
         timer->ts_queue.Push(Event{static_cast<s64>(timer->GetTicks() + cycles_into_future), 0,
-                                   userdata, event_type});
+                                   user_data, event_type});
     }
 }
 
-void Timing::UnscheduleEvent(const TimingEventType* event_type, u64 userdata) {
+void Timing::UnscheduleEvent(const TimingEventType* event_type, std::uintptr_t user_data) {
     for (auto timer : timers) {
         auto itr = std::remove_if(
             timer->event_queue.begin(), timer->event_queue.end(),
-            [&](const Event& e) { return e.type == event_type && e.userdata == userdata; });
+            [&](const Event& e) { return e.type == event_type && e.user_data == user_data; });
 
         // Removing random items breaks the invariant so we have to re-establish it.
         if (itr != timer->event_queue.end()) {
@@ -189,7 +189,7 @@ void Timing::Timer::Advance() {
         std::pop_heap(event_queue.begin(), event_queue.end(), std::greater<>());
         event_queue.pop_back();
         if (evt.type->callback != nullptr) {
-            evt.type->callback(evt.userdata, executed_ticks - evt.time);
+            evt.type->callback(evt.user_data, executed_ticks - evt.time);
         } else {
             LOG_ERROR(Core, "Event '{}' has no callback", *evt.type->name);
         }
