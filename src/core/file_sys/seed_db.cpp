@@ -12,9 +12,9 @@ namespace FileSys {
 bool SeedDB::Load() {
     seeds.clear();
     const std::string path{
-        fmt::format("{}/seeddb.bin", FileUtil::GetUserPath(FileUtil::UserPath::SysDataDir))};
-    if (!FileUtil::Exists(path)) {
-        if (!FileUtil::CreateFullPath(path)) {
+        fmt::format("{}/seeddb.bin", Common::FS::GetUserPath(Common::FS::UserPath::SysDataDir))};
+    if (!Common::FS::Exists(path)) {
+        if (!Common::FS::CreateFullPath(path)) {
             LOG_ERROR(Service_FS, "Failed to create seed database");
             return false;
         }
@@ -24,7 +24,7 @@ bool SeedDB::Load() {
         }
         return true;
     }
-    FileUtil::IOFile file{path, "rb"};
+    Common::FS::IOFile file{path, "rb"};
     if (!file.IsOpen()) {
         LOG_ERROR(Service_FS, "Failed to open seed database");
         return false;
@@ -59,12 +59,12 @@ bool SeedDB::Load() {
 
 bool SeedDB::Save() {
     const std::string path{
-        fmt::format("{}/seeddb.bin", FileUtil::GetUserPath(FileUtil::UserPath::SysDataDir))};
-    if (!FileUtil::CreateFullPath(path)) {
+        fmt::format("{}/seeddb.bin", Common::FS::GetUserPath(Common::FS::UserPath::SysDataDir))};
+    if (!Common::FS::CreateFullPath(path)) {
         LOG_ERROR(Service_FS, "Failed to create seed database");
         return false;
     }
-    FileUtil::IOFile file{path, "wb"};
+    Common::FS::IOFile file{path, "wb"};
     if (!file.IsOpen()) {
         LOG_ERROR(Service_FS, "Failed to open seed database");
         return false;

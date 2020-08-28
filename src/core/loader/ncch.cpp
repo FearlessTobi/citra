@@ -34,7 +34,7 @@ namespace Loader {
 
 static const u64 UPDATE_MASK = 0x0000000e00000000;
 
-FileType AppLoader_NCCH::IdentifyType(FileUtil::IOFile& file) {
+FileType AppLoader_NCCH::IdentifyType(Common::FS::IOFile& file) {
     u32 magic;
     file.Seek(0x100, SEEK_SET);
     if (1 != file.ReadArray<u32>(&magic, 1))

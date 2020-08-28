@@ -140,17 +140,17 @@ std::string LayeredFS::ReadName(u32 offset, u32 name_length) {
 }
 
 void LayeredFS::LoadRelocations() {
-    if (!FileUtil::Exists(patch_path)) {
+    if (!Common::FS::Exists(patch_path)) {
         return;
     }
 
-    const FileUtil::DirectoryEntryCallable callback = [this,
-                                                       &callback](u64* /*num_entries_out*/,
-                                                                  const std::string& directory,
-                                                                  const std::string& virtual_name) {
+    const Common::FS::DirectoryEntryCallable callback = [this, &callback](
+                                                            u64* /*num_entries_out*/,
+                                                            const std::string& directory,
+                                                            const std::string& virtual_name) {
         auto* parent = directory_path_map.at(directory.substr(patch_path.size() - 1));
 
-        if (FileUtil::IsDirectory(directory + virtual_name + DIR_SEP)) {
+        if (Common::FS::IsDirectory(directory + virtual_name + DIR_SEP)) {
             const auto path = (directory + virtual_name + DIR_SEP).substr(patch_path.size() - 1);
             if (!directory_path_map.count(path)) { // Add this directory
                 auto directory = std::make_unique<Directory>();
@@ -161,8 +161,8 @@ void LayeredFS::LoadRelocations() {
                 parent->directories.emplace_back(std::move(directory));
                 LOG_INFO(Service_FS, "LayeredFS created directory {}", path);
             }
-            return FileUtil::ForeachDirectoryEntry(nullptr, directory + virtual_name + DIR_SEP,
-                                                   callback);
+            return Common::FS::ForeachDirectoryEntry(nullptr, directory + virtual_name + DIR_SEP,
+                                                     callback);
         }
 
         const auto path = (directory + virtual_name).substr(patch_path.size() - 1);
@@ -179,16 +179,16 @@ void LayeredFS::LoadRelocations() {
         auto* file = file_path_map.at(path);
         file->relocation.type = 1;
         file->relocation.replace_file_path = directory + virtual_name;
-        file->relocation.size = FileUtil::GetSize(directory + virtual_name);
+        file->relocation.size = Common::FS::GetSize(directory + virtual_name);
         LOG_INFO(Service_FS, "LayeredFS replacement file in use for {}", path);
         return true;
     };
 
-    FileUtil::ForeachDirectoryEntry(nullptr, patch_path, callback);
+    Common::FS::ForeachDirectoryEntry(nullptr, patch_path, callback);
 }
 
 void LayeredFS::LoadExtRelocations() {
-    if (!FileUtil::Exists(patch_ext_path)) {
+    if (!Common::FS::Exists(patch_ext_path)) {
         return;
     }
 
@@ -197,11 +197,11 @@ void LayeredFS::LoadExtRelocations() {
         patch_ext_path.erase(patch_ext_path.size() - 1, 1);
     }
 
-    FileUtil::FSTEntry result;
-    FileUtil::ScanDirectoryTree(patch_ext_path, result, 256);
+    Common::FS::FSTEntry result;
+    Common::FS::ScanDirectoryTree(patch_ext_path, result, 256);
 
     for (const auto& entry : result.children) {
-        if (FileUtil::IsDirectory(entry.physicalName)) {
+        if (Common::FS::IsDirectory(entry.physicalName)) {
             continue;
         }
 
@@ -230,7 +230,7 @@ void LayeredFS::LoadExtRelocations() {
                 continue;
             }
 
-            FileUtil::IOFile patch_file(entry.physicalName, "rb");
+            Common::FS::IOFile patch_file(entry.physicalName, "rb");
             if (!patch_file) {
                 LOG_ERROR(Service_FS, "LayeredFS Could not open file {}", entry.physicalName);
                 continue;
@@ -522,7 +522,7 @@ std::size_t LayeredFS::ReadFile(std::size_t offset, std::size_t length, u8* buff
             romfs->ReadFile(relocation.original_offset + relative_offset, to_read,
                             buffer + read_size);
         } else if (relocation.type == 1) { // replace
-            FileUtil::IOFile replace_file(relocation.replace_file_path, "rb");
+            Common::FS::IOFile replace_file(relocation.replace_file_path, "rb");
             if (replace_file) {
                 replace_file.Seek(relative_offset, SEEK_SET);
                 replace_file.ReadBytes(buffer + read_size, to_read);
@@ -548,7 +548,7 @@ std::size_t LayeredFS::ReadFile(std::size_t offset, std::size_t length, u8* buff
 }
 
 bool LayeredFS::ExtractDirectory(Directory& current, const std::string& target_path) {
-    if (!FileUtil::CreateFullPath(target_path + current.path)) {
+    if (!Common::FS::CreateFullPath(target_path + current.path)) {
         LOG_ERROR(Service_FS, "Could not create path {}", target_path + current.path);
         return false;
     }
@@ -560,7 +560,7 @@ bool LayeredFS::ExtractDirectory(Directory& current, const std::string& target_p
         const auto path = target_path + file->path;
         LOG_INFO(Service_FS, "Extracting {} to {}", file->path, path);
 
-        FileUtil::IOFile target_file(path, "wb");
+        Common::FS::IOFile target_file(path, "wb");
         if (!target_file) {
             LOG_ERROR(Service_FS, "Could not open file {}", path);
             return false;

@@ -1382,7 +1382,7 @@ Module::Module(Core::System& system) : system(system) {
     change_state_event =
         system.Kernel().CreateEvent(Kernel::ResetType::OneShot, "CECD::change_state_event");
 
-    const std::string& nand_directory = FileUtil::GetUserPath(FileUtil::UserPath::NANDDir);
+    const std::string& nand_directory = Common::FS::GetUserPath(Common::FS::UserPath::NANDDir);
     FileSys::ArchiveFactory_SystemSaveData systemsavedata_factory(nand_directory);
 
     // Open the SystemSaveData archive 0x00010026

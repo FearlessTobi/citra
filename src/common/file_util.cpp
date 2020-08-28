@@ -74,7 +74,7 @@
 // This namespace has various generic functions related to files and paths.
 // The code still needs a ton of cleanup.
 // REMEMBER: strdup considered harmful!
-namespace FileUtil {
+namespace Common::FS {
 
 // Remove any ending forward slashes from directory paths
 // Modifies argument.
@@ -196,7 +196,7 @@ bool CreateFullPath(const std::string& fullPath) {
     int panicCounter = 100;
     LOG_TRACE(Common_Filesystem, "path {}", fullPath);
 
-    if (FileUtil::Exists(fullPath)) {
+    if (Exists(fullPath)) {
         LOG_DEBUG(Common_Filesystem, "path exists {}", fullPath);
         return true;
     }
@@ -212,7 +212,7 @@ bool CreateFullPath(const std::string& fullPath) {
 
         // Include the '/' so the first call is CreateDir("/") rather than CreateDir("")
         std::string const subPath(fullPath.substr(0, position + 1));
-        if (!FileUtil::IsDirectory(subPath) && !FileUtil::CreateDir(subPath)) {
+        if (!IsDirectory(subPath) && !CreateDir(subPath)) {
             LOG_ERROR(Common, "CreateFullPath: directory creation failed");
             return false;
         }
@@ -231,7 +231,7 @@ bool DeleteDir(const std::string& filename) {
     LOG_TRACE(Common_Filesystem, "directory {}", filename);
 
     // check if a directory
-    if (!FileUtil::IsDirectory(filename)) {
+    if (!IsDirectory(filename)) {
         LOG_ERROR(Common_Filesystem, "Not a directory {}", filename);
         return false;
     }
@@ -371,7 +371,7 @@ u64 GetSize(FILE* f) {
 bool CreateEmptyFile(const std::string& filename) {
     LOG_TRACE(Common_Filesystem, "{}", filename);
 
-    if (!FileUtil::IOFile(filename, "wb").IsOpen()) {
+    if (!IOFile(filename, "wb").IsOpen()) {
         LOG_ERROR(Common_Filesystem, "failed {}: {}", filename, GetLastErrorMsg());
         return false;
     }
@@ -499,29 +499,34 @@ bool DeleteDirRecursively(const std::string& directory, unsigned int recursion) 
         return false;
 
     // Delete the outermost directory
-    FileUtil::DeleteDir(directory);
+    DeleteDir(directory);
     return true;
 }
 
 void CopyDir(const std::string& source_path, const std::string& dest_path) {
 #ifndef _WIN32
-    if (source_path == dest_path)
+    if (source_path == dest_path) {
         return;
-    if (!FileUtil::Exists(source_path))
+    }
+    if (!Exists(source_path)) {
         return;
-    if (!FileUtil::Exists(dest_path))
-        FileUtil::CreateFullPath(dest_path);
+    }
+    if (!Exists(dest_path)) {
+        CreateFullPath(dest_path);
+    }
 
     DIR* dirp = opendir(source_path.c_str());
-    if (!dirp)
+    if (!dirp) {
         return;
+    }
 
     while (struct dirent* result = readdir(dirp)) {
         const std::string virtualName(result->d_name);
         // check for "." and ".."
         if (((virtualName[0] == '.') && (virtualName[1] == '\0')) ||
-            ((virtualName[0] == '.') && (virtualName[1] == '.') && (virtualName[2] == '\0')))
+            ((virtualName[0] == '.') && (virtualName[1] == '.') && (virtualName[2] == '\0'))) {
             continue;
+        }
 
         std::string source, dest;
         source = source_path + virtualName;
@@ -529,11 +534,13 @@ void CopyDir(const std::string& source_path, const std::string& dest_path) {
         if (IsDirectory(source)) {
             source += '/';
             dest += '/';
-            if (!FileUtil::Exists(dest))
-                FileUtil::CreateFullPath(dest);
+            if (!Exists(dest)) {
+                CreateFullPath(dest);
+            }
             CopyDir(source, dest);
-        } else if (!FileUtil::Exists(dest))
-            FileUtil::Copy(source, dest);
+        } else if (!Exists(dest)) {
+            Copy(source, dest);
+        }
     }
     closedir(dirp);
 #endif
@@ -549,7 +556,7 @@ std::optional<std::string> GetCurrentDir() {
     if (!dir) {
 #endif
         LOG_ERROR(Common_Filesystem, "GetCurrentDirectory failed: {}", GetLastErrorMsg());
-        return {};
+        return std::nullopt;
     }
 #ifdef _WIN32
     std::string strDir = Common::UTF16ToUTF8(dir);
@@ -557,8 +564,8 @@ std::optional<std::string> GetCurrentDir() {
     std::string strDir = dir;
 #endif
     free(dir);
-    return strDir;
-} // namespace FileUtil
+    return std::move(strDir);
+} // namespace Common::FS
 
 bool SetCurrentDir(const std::string& directory) {
 #ifdef _WIN32
@@ -686,7 +693,7 @@ void SetUserPath(const std::string& path) {
     } else {
 #ifdef _WIN32
         user_path = GetExeDirectory() + DIR_SEP USERDATA_DIR DIR_SEP;
-        if (!FileUtil::IsDirectory(user_path)) {
+        if (!IsDirectory(user_path)) {
             user_path = AppDataRoamingDirectory() + DIR_SEP EMU_DATA_DIR DIR_SEP;
         } else {
             LOG_INFO(Common_Filesystem, "Using the local user directory");
@@ -695,13 +702,13 @@ void SetUserPath(const std::string& path) {
         g_paths.emplace(UserPath::ConfigDir, user_path + CONFIG_DIR DIR_SEP);
         g_paths.emplace(UserPath::CacheDir, user_path + CACHE_DIR DIR_SEP);
 #elif ANDROID
-        if (FileUtil::Exists(ROOT_DIR DIR_SEP SDCARD_DIR)) {
+        if (Exists(ROOT_DIR DIR_SEP SDCARD_DIR)) {
             user_path = ROOT_DIR DIR_SEP SDCARD_DIR DIR_SEP EMU_DATA_DIR DIR_SEP;
             g_paths.emplace(UserPath::ConfigDir, user_path + CONFIG_DIR DIR_SEP);
             g_paths.emplace(UserPath::CacheDir, user_path + CACHE_DIR DIR_SEP);
         }
 #else
-        if (FileUtil::Exists(ROOT_DIR DIR_SEP USERDATA_DIR)) {
+        if (Exists(ROOT_DIR DIR_SEP USERDATA_DIR)) {
             user_path = ROOT_DIR DIR_SEP USERDATA_DIR DIR_SEP;
             g_paths.emplace(UserPath::ConfigDir, user_path + CONFIG_DIR DIR_SEP);
             g_paths.emplace(UserPath::CacheDir, user_path + CACHE_DIR DIR_SEP);
@@ -964,37 +971,42 @@ bool IOFile::Open() {
 }
 
 bool IOFile::Close() {
-    if (!IsOpen() || 0 != std::fclose(m_file))
+    if (!IsOpen() || 0 != std::fclose(m_file)) {
         m_good = false;
+    }
 
     m_file = nullptr;
     return m_good;
 }
 
 u64 IOFile::GetSize() const {
-    if (IsOpen())
-        return FileUtil::GetSize(m_file);
+    if (IsOpen()) {
+        return FS::GetSize(m_file);
+    }
 
     return 0;
 }
 
 bool IOFile::Seek(s64 off, int origin) {
-    if (!IsOpen() || 0 != fseeko(m_file, off, origin))
+    if (!IsOpen() || 0 != fseeko(m_file, off, origin)) {
         m_good = false;
+    }
 
     return m_good;
 }
 
 u64 IOFile::Tell() const {
-    if (IsOpen())
+    if (IsOpen()) {
         return ftello(m_file);
+    }
 
     return std::numeric_limits<u64>::max();
 }
 
 bool IOFile::Flush() {
-    if (!IsOpen() || 0 != std::fflush(m_file))
+    if (!IsOpen() || 0 != std::fflush(m_file)) {
         m_good = false;
+    }
 
     return m_good;
 }
@@ -1045,4 +1057,4 @@ bool IOFile::Resize(u64 size) {
     return m_good;
 }
 
-} // namespace FileUtil
+} // namespace Common::FS

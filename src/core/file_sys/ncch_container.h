@@ -368,8 +368,8 @@ private:
     u32 partition = 0;
 
     std::string filepath;
-    FileUtil::IOFile file;
-    FileUtil::IOFile exefs_file;
+    Common::FS::IOFile file;
+    Common::FS::IOFile exefs_file;
 };
 
 } // namespace FileSys

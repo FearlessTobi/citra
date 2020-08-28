@@ -740,16 +740,16 @@ void CachedSurface::DumpTexture(GLuint target_tex, u64 tex_hash) {
     const auto& image_interface = Core::System::GetInstance().GetImageInterface();
     auto& custom_tex_cache = Core::System::GetInstance().CustomTexCache();
     std::string dump_path =
-        fmt::format("{}textures/{:016X}/", FileUtil::GetUserPath(FileUtil::UserPath::DumpDir),
+        fmt::format("{}textures/{:016X}/", Common::FS::GetUserPath(Common::FS::UserPath::DumpDir),
                     Core::System::GetInstance().Kernel().GetCurrentProcess()->codeset->program_id);
-    if (!FileUtil::CreateFullPath(dump_path)) {
+    if (!Common::FS::CreateFullPath(dump_path)) {
         LOG_ERROR(Render, "Unable to create {}", dump_path);
         return;
     }
 
     dump_path += fmt::format("tex1_{}x{}_{:016X}_{}.png", width, height, tex_hash,
                              static_cast<u32>(pixel_format));
-    if (!custom_tex_cache.IsTextureDumped(tex_hash) && !FileUtil::Exists(dump_path)) {
+    if (!custom_tex_cache.IsTextureDumped(tex_hash) && !Common::FS::Exists(dump_path)) {
         custom_tex_cache.SetTextureDumped(tex_hash);
 
         LOG_INFO(Render_OpenGL, "Dumping texture to {}", dump_path);

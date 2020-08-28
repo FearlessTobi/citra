@@ -45,14 +45,14 @@ void CustomTexCache::FindCustomTextures(u64 program_id) {
     // [TitleID]/tex1_[width]x[height]_[64-bit hash]_[format].png
 
     const std::string load_path = fmt::format(
-        "{}textures/{:016X}/", FileUtil::GetUserPath(FileUtil::UserPath::LoadDir), program_id);
+        "{}textures/{:016X}/", Common::FS::GetUserPath(Common::FS::UserPath::LoadDir), program_id);
 
-    if (FileUtil::Exists(load_path)) {
-        FileUtil::FSTEntry texture_dir;
-        std::vector<FileUtil::FSTEntry> textures;
+    if (Common::FS::Exists(load_path)) {
+        Common::FS::FSTEntry texture_dir;
+        std::vector<Common::FS::FSTEntry> textures;
         // 64 nested folders should be plenty for most cases
-        FileUtil::ScanDirectoryTree(load_path, texture_dir, 64);
-        FileUtil::GetAllFilesFromNestedEntries(texture_dir, textures);
+        Common::FS::ScanDirectoryTree(load_path, texture_dir, 64);
+        Common::FS::GetAllFilesFromNestedEntries(texture_dir, textures);
 
         for (const auto& file : textures) {
             if (file.isDirectory)

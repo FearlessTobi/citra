@@ -37,22 +37,22 @@ static_assert(sizeof(CSTHeader) == 256, "CSTHeader should be 256 bytes");
 constexpr std::array<u8, 4> header_magic_bytes{{'C', 'S', 'T', 0x1B}};
 
 std::string GetSaveStatePath(u64 program_id, u32 slot) {
-    return fmt::format("{}{:016X}.{:02d}.cst", FileUtil::GetUserPath(FileUtil::UserPath::StatesDir),
-                       program_id, slot);
+    return fmt::format("{}{:016X}.{:02d}.cst",
+                       Common::FS::GetUserPath(Common::FS::UserPath::StatesDir), program_id, slot);
 }
 
 std::vector<SaveStateInfo> ListSaveStates(u64 program_id) {
     std::vector<SaveStateInfo> result;
     for (u32 slot = 1; slot <= SaveStateSlotCount; ++slot) {
         const auto path = GetSaveStatePath(program_id, slot);
-        if (!FileUtil::Exists(path)) {
+        if (!Common::FS::Exists(path)) {
             continue;
         }
 
         SaveStateInfo info;
         info.slot = slot;
 
-        FileUtil::IOFile file(path, "rb");
+        Common::FS::IOFile file(path, "rb");
         if (!file) {
             LOG_ERROR(Core, "Could not open file {}", path);
             continue;
@@ -99,11 +99,11 @@ void System::SaveState(u32 slot) const {
         reinterpret_cast<const u8*>(str.data()), str.size());
 
     const auto path = GetSaveStatePath(title_id, slot);
-    if (!FileUtil::CreateFullPath(path)) {
+    if (!Common::FS::CreateFullPath(path)) {
         throw std::runtime_error("Could not create path " + path);
     }
 
-    FileUtil::IOFile file(path, "wb");
+    Common::FS::IOFile file(path, "wb");
     if (!file) {
         throw std::runtime_error("Could not open file " + path);
     }
@@ -134,9 +134,9 @@ void System::LoadState(u32 slot) {
 
     std::vector<u8> decompressed;
     {
-        std::vector<u8> buffer(FileUtil::GetSize(path) - sizeof(CSTHeader));
+        std::vector<u8> buffer(Common::FS::GetSize(path) - sizeof(CSTHeader));
 
-        FileUtil::IOFile file(path, "rb");
+        Common::FS::IOFile file(path, "rb");
         file.Seek(sizeof(CSTHeader), SEEK_SET); // Skip header
         if (file.ReadBytes(buffer.data(), buffer.size()) != buffer.size()) {
             throw std::runtime_error("Could not read from file at " + path);

@@ -30,7 +30,7 @@ namespace FileSys {
  */
 class FixSizeDiskFile : public DiskFile {
 public:
-    FixSizeDiskFile(FileUtil::IOFile&& file, const Mode& mode,
+    FixSizeDiskFile(Common::FS::IOFile&& file, const Mode& mode,
                     std::unique_ptr<DelayGenerator> delay_generator_)
         : DiskFile(std::move(file), mode, std::move(delay_generator_)) {
         size = GetSize();
@@ -144,7 +144,7 @@ public:
             break; // Expected 'success' case
         }
 
-        FileUtil::IOFile file(full_path, "r+b");
+        Common::FS::IOFile file(full_path, "r+b");
         if (!file.IsOpen()) {
             LOG_CRITICAL(Service_FS, "(unreachable) Unknown error opening {}", full_path);
             return ERROR_FILE_NOT_FOUND;
@@ -248,7 +248,7 @@ Path ArchiveFactory_ExtSaveData::GetCorrectedPath(const Path& path) {
 ResultVal<std::unique_ptr<ArchiveBackend>> ArchiveFactory_ExtSaveData::Open(const Path& path,
                                                                             u64 program_id) {
     std::string fullpath = GetExtSaveDataPath(mount_point, GetCorrectedPath(path)) + "user/";
-    if (!FileUtil::Exists(fullpath)) {
+    if (!Common::FS::Exists(fullpath)) {
         // TODO(Subv): Verify the archive behavior of SharedExtSaveData compared to ExtSaveData.
         // ExtSaveData seems to return FS_NotFound (120) when the archive doesn't exist.
         if (!shared) {
@@ -270,12 +270,12 @@ ResultCode ArchiveFactory_ExtSaveData::Format(const Path& path,
     // These folders are always created with the ExtSaveData
     std::string user_path = GetExtSaveDataPath(mount_point, corrected_path) + "user/";
     std::string boss_path = GetExtSaveDataPath(mount_point, corrected_path) + "boss/";
-    FileUtil::CreateFullPath(user_path);
-    FileUtil::CreateFullPath(boss_path);
+    Common::FS::CreateFullPath(user_path);
+    Common::FS::CreateFullPath(boss_path);
 
     // Write the format metadata
     std::string metadata_path = GetExtSaveDataPath(mount_point, corrected_path) + "metadata";
-    FileUtil::IOFile file(metadata_path, "wb");
+    Common::FS::IOFile file(metadata_path, "wb");
 
     if (!file.IsOpen()) {
         // TODO(Subv): Find the correct error code
@@ -289,7 +289,7 @@ ResultCode ArchiveFactory_ExtSaveData::Format(const Path& path,
 ResultVal<ArchiveFormatInfo> ArchiveFactory_ExtSaveData::GetFormatInfo(const Path& path,
                                                                        u64 program_id) const {
     std::string metadata_path = GetExtSaveDataPath(mount_point, path) + "metadata";
-    FileUtil::IOFile file(metadata_path, "rb");
+    Common::FS::IOFile file(metadata_path, "rb");
 
     if (!file.IsOpen()) {
         LOG_ERROR(Service_FS, "Could not open metadata information for archive");
@@ -305,7 +305,7 @@ ResultVal<ArchiveFormatInfo> ArchiveFactory_ExtSaveData::GetFormatInfo(const Pat
 void ArchiveFactory_ExtSaveData::WriteIcon(const Path& path, const u8* icon_data,
                                            std::size_t icon_size) {
     std::string game_path = FileSys::GetExtSaveDataPath(GetMountPoint(), path);
-    FileUtil::IOFile icon_file(game_path + "icon", "wb");
+    Common::FS::IOFile icon_file(game_path + "icon", "wb");
     icon_file.WriteBytes(icon_data, icon_size);
 }
 

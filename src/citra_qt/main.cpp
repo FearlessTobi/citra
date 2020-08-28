@@ -140,8 +140,8 @@ static void InitializeLogging() {
     log_filter.ParseFilterString(Settings::values.log_filter);
     Log::SetGlobalFilter(log_filter);
 
-    const std::string& log_dir = FileUtil::GetUserPath(FileUtil::UserPath::LogDir);
-    FileUtil::CreateFullPath(log_dir);
+    const std::string& log_dir = Common::FS::GetUserPath(Common::FS::UserPath::LogDir);
+    Common::FS::CreateFullPath(log_dir);
     Log::AddBackend(std::make_unique<Log::FileBackend>(log_dir + LOG_FILE));
 #ifdef _WIN32
     Log::AddBackend(std::make_unique<Log::DebuggerBackend>());
@@ -1273,13 +1273,13 @@ void GMainWindow::OnGameListOpenFolder(u64 data_id, GameListOpenTarget target) {
     switch (target) {
     case GameListOpenTarget::SAVE_DATA: {
         open_target = "Save Data";
-        std::string sdmc_dir = FileUtil::GetUserPath(FileUtil::UserPath::SDMCDir);
+        std::string sdmc_dir = Common::FS::GetUserPath(Common::FS::UserPath::SDMCDir);
         path = FileSys::ArchiveSource_SDSaveData::GetSaveDataPathFor(sdmc_dir, data_id);
         break;
     }
     case GameListOpenTarget::EXT_DATA: {
         open_target = "Extra Data";
-        std::string sdmc_dir = FileUtil::GetUserPath(FileUtil::UserPath::SDMCDir);
+        std::string sdmc_dir = Common::FS::GetUserPath(Common::FS::UserPath::SDMCDir);
         path = FileSys::GetExtDataPathFromId(sdmc_dir, data_id);
         break;
     }
@@ -1297,17 +1297,17 @@ void GMainWindow::OnGameListOpenFolder(u64 data_id, GameListOpenTarget target) {
     case GameListOpenTarget::TEXTURE_DUMP:
         open_target = "Dumped Textures";
         path = fmt::format("{}textures/{:016X}/",
-                           FileUtil::GetUserPath(FileUtil::UserPath::DumpDir), data_id);
+                           Common::FS::GetUserPath(Common::FS::UserPath::DumpDir), data_id);
         break;
     case GameListOpenTarget::TEXTURE_LOAD:
         open_target = "Custom Textures";
         path = fmt::format("{}textures/{:016X}/",
-                           FileUtil::GetUserPath(FileUtil::UserPath::LoadDir), data_id);
+                           Common::FS::GetUserPath(Common::FS::UserPath::LoadDir), data_id);
         break;
     case GameListOpenTarget::MODS:
         open_target = "Mods";
-        path = fmt::format("{}mods/{:016X}/", FileUtil::GetUserPath(FileUtil::UserPath::LoadDir),
-                           data_id);
+        path = fmt::format("{}mods/{:016X}/",
+                           Common::FS::GetUserPath(Common::FS::UserPath::LoadDir), data_id);
         break;
     default:
         LOG_ERROR(Frontend, "Unexpected target {}", static_cast<int>(target));
@@ -1350,9 +1350,9 @@ void GMainWindow::OnGameListDumpRomFS(QString game_path, u64 program_id) {
     dialog->setValue(0);
 
     const auto base_path = fmt::format(
-        "{}romfs/{:016X}", FileUtil::GetUserPath(FileUtil::UserPath::DumpDir), program_id);
+        "{}romfs/{:016X}", Common::FS::GetUserPath(Common::FS::UserPath::DumpDir), program_id);
     const auto update_path =
-        fmt::format("{}romfs/{:016X}", FileUtil::GetUserPath(FileUtil::UserPath::DumpDir),
+        fmt::format("{}romfs/{:016X}", Common::FS::GetUserPath(Common::FS::UserPath::DumpDir),
                     program_id | 0x0004000e00000000);
     using FutureWatcher = QFutureWatcher<std::pair<Loader::ResultStatus, Loader::ResultStatus>>;
     auto* future_watcher = new FutureWatcher(this);
@@ -1383,12 +1383,12 @@ void GMainWindow::OnGameListDumpRomFS(QString game_path, u64 program_id) {
 void GMainWindow::OnGameListOpenDirectory(const QString& directory) {
     QString path;
     if (directory == QStringLiteral("INSTALLED")) {
-        path = QString::fromStdString(FileUtil::GetUserPath(FileUtil::UserPath::SDMCDir) +
+        path = QString::fromStdString(Common::FS::GetUserPath(Common::FS::UserPath::SDMCDir) +
                                       "Nintendo "
                                       "3DS/00000000000000000000000000000000/"
                                       "00000000000000000000000000000000/title/00040000");
     } else if (directory == QStringLiteral("SYSTEM")) {
-        path = QString::fromStdString(FileUtil::GetUserPath(FileUtil::UserPath::NANDDir) +
+        path = QString::fromStdString(Common::FS::GetUserPath(Common::FS::UserPath::NANDDir) +
                                       "00000000000000000000000000000000/title/00040010");
     } else {
         path = directory;
@@ -1814,7 +1814,7 @@ void GMainWindow::OnRemoveAmiibo() {
 
 void GMainWindow::OnOpenCitraFolder() {
     QDesktopServices::openUrl(QUrl::fromLocalFile(
-        QString::fromStdString(FileUtil::GetUserPath(FileUtil::UserPath::UserDir))));
+        QString::fromStdString(Common::FS::GetUserPath(Common::FS::UserPath::UserDir))));
 }
 
 void GMainWindow::OnToggleFilterBar() {
@@ -2433,7 +2433,7 @@ int main(int argc, char* argv[]) {
     QSurfaceFormat::setDefaultFormat(format);
 
 #ifdef __APPLE__
-    std::string bin_path = FileUtil::GetBundleDirectory() + DIR_SEP + "..";
+    std::string bin_path = Common::FS::GetBundleDirectory() + DIR_SEP + "..";
     chdir(bin_path.c_str());
 #endif
     QCoreApplication::setAttribute(Qt::AA_DontCheckOpenGLContextThreadAffinity);

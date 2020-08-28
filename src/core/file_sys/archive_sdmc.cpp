@@ -97,14 +97,14 @@ ResultVal<std::unique_ptr<FileBackend>> SDMCArchive::OpenFileBase(const Path& pa
             return ERROR_NOT_FOUND;
         } else {
             // Create the file
-            FileUtil::CreateEmptyFile(full_path);
+            Common::FS::CreateEmptyFile(full_path);
         }
         break;
     case PathParser::FileFound:
         break; // Expected 'success' case
     }
 
-    FileUtil::IOFile file(full_path, mode.write_flag ? "r+b" : "rb");
+    Common::FS::IOFile file(full_path, mode.write_flag ? "r+b" : "rb");
     if (!file.IsOpen()) {
         LOG_CRITICAL(Service_FS, "(unreachable) Unknown error opening {}", full_path);
         return ERROR_NOT_FOUND;
@@ -141,7 +141,7 @@ ResultCode SDMCArchive::DeleteFile(const Path& path) const {
         break; // Expected 'success' case
     }
 
-    if (FileUtil::Delete(full_path)) {
+    if (Common::FS::Delete(full_path)) {
         return RESULT_SUCCESS;
     }
 
@@ -168,7 +168,7 @@ ResultCode SDMCArchive::RenameFile(const Path& src_path, const Path& dest_path) 
     const auto src_path_full = path_parser_src.BuildHostPath(mount_point);
     const auto dest_path_full = path_parser_dest.BuildHostPath(mount_point);
 
-    if (FileUtil::Rename(src_path_full, dest_path_full)) {
+    if (Common::FS::Rename(src_path_full, dest_path_full)) {
         return RESULT_SUCCESS;
     }
 
@@ -218,12 +218,13 @@ static ResultCode DeleteDirectoryHelper(const Path& path, const std::string& mou
 }
 
 ResultCode SDMCArchive::DeleteDirectory(const Path& path) const {
-    return DeleteDirectoryHelper(path, mount_point, FileUtil::DeleteDir);
+    return DeleteDirectoryHelper(path, mount_point, Common::FS::DeleteDir);
 }
 
 ResultCode SDMCArchive::DeleteDirectoryRecursively(const Path& path) const {
-    return DeleteDirectoryHelper(
-        path, mount_point, [](const std::string& p) { return FileUtil::DeleteDirRecursively(p); });
+    return DeleteDirectoryHelper(path, mount_point, [](const std::string& p) {
+        return Common::FS::DeleteDirRecursively(p);
+    });
 }
 
 ResultCode SDMCArchive::CreateFile(const FileSys::Path& path, u64 size) const {
@@ -255,11 +256,11 @@ ResultCode SDMCArchive::CreateFile(const FileSys::Path& path, u64 size) const {
     }
 
     if (size == 0) {
-        FileUtil::CreateEmptyFile(full_path);
+        Common::FS::CreateEmptyFile(full_path);
         return RESULT_SUCCESS;
     }
 
-    FileUtil::IOFile file(full_path, "wb");
+    Common::FS::IOFile file(full_path, "wb");
     // Creates a sparse file (or a normal file on filesystems without the concept of sparse files)
     // We do this by seeking to the right size, then writing a single null byte.
     if (file.Seek(size - 1, SEEK_SET) && file.WriteBytes("", 1) == 1) {
@@ -297,7 +298,7 @@ ResultCode SDMCArchive::CreateDirectory(const Path& path) const {
         break; // Expected 'success' case
     }
 
-    if (FileUtil::CreateDir(mount_point + path.AsString())) {
+    if (Common::FS::CreateDir(mount_point + path.AsString())) {
         return RESULT_SUCCESS;
     }
 
@@ -325,7 +326,7 @@ ResultCode SDMCArchive::RenameDirectory(const Path& src_path, const Path& dest_p
     const auto src_path_full = path_parser_src.BuildHostPath(mount_point);
     const auto dest_path_full = path_parser_dest.BuildHostPath(mount_point);
 
-    if (FileUtil::Rename(src_path_full, dest_path_full)) {
+    if (Common::FS::Rename(src_path_full, dest_path_full)) {
         return RESULT_SUCCESS;
     }
 
@@ -382,7 +383,7 @@ bool ArchiveFactory_SDMC::Initialize() {
         return false;
     }
 
-    if (!FileUtil::CreateFullPath(sdmc_directory)) {
+    if (!Common::FS::CreateFullPath(sdmc_directory)) {
         LOG_ERROR(Service_FS, "Unable to create SDMC path.");
         return false;
     }

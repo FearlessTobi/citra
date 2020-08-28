@@ -59,7 +59,7 @@ PathParser::PathParser(const Path& path) {
 
 PathParser::HostStatus PathParser::GetHostStatus(std::string_view mount_point) const {
     std::string path{mount_point};
-    if (!FileUtil::IsDirectory(path))
+    if (!Common::FS::IsDirectory(path))
         return InvalidMountPoint;
     if (path_sequence.empty()) {
         return DirectoryFound;
@@ -70,17 +70,17 @@ PathParser::HostStatus PathParser::GetHostStatus(std::string_view mount_point) c
             path += '/';
         path += *iter;
 
-        if (!FileUtil::Exists(path))
+        if (!Common::FS::Exists(path))
             return PathNotFound;
-        if (FileUtil::IsDirectory(path))
+        if (Common::FS::IsDirectory(path))
             continue;
         return FileInPath;
     }
 
     path += "/" + path_sequence.back();
-    if (!FileUtil::Exists(path))
+    if (!Common::FS::Exists(path))
         return NotFound;
-    if (FileUtil::IsDirectory(path))
+    if (Common::FS::IsDirectory(path))
         return DirectoryFound;
     return FileFound;
 }

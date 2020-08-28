@@ -364,7 +364,7 @@ SectionID ElfReader::GetSectionByName(const char* name, int firstSection) const 
 
 namespace Loader {
 
-FileType AppLoader_ELF::IdentifyType(FileUtil::IOFile& file) {
+FileType AppLoader_ELF::IdentifyType(Common::FS::IOFile& file) {
     u32 magic;
     file.Seek(0, SEEK_SET);
     if (1 != file.ReadArray<u32>(&magic, 1))

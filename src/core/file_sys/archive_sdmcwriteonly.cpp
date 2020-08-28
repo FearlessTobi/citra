@@ -69,7 +69,7 @@ bool ArchiveFactory_SDMCWriteOnly::Initialize() {
         return false;
     }
 
-    if (!FileUtil::CreateFullPath(sdmc_directory)) {
+    if (!Common::FS::CreateFullPath(sdmc_directory)) {
         LOG_ERROR(Service_FS, "Unable to create SDMC path.");
         return false;
     }

@@ -159,8 +159,9 @@ void LoadBootromKeys() {
     // by other applications e.g. process9. These normal keys thus aren't used by any application
     // and have no value for emulation
 
-    const std::string filepath = FileUtil::GetUserPath(FileUtil::UserPath::SysDataDir) + BOOTROM9;
-    auto file = FileUtil::IOFile(filepath, "rb");
+    const std::string filepath =
+        Common::FS::GetUserPath(Common::FS::UserPath::SysDataDir) + BOOTROM9;
+    auto file = Common::FS::IOFile(filepath, "rb");
     if (!file) {
         return;
     }
@@ -310,8 +311,8 @@ void LoadNativeFirmKeysNew3DS() {
     // The first 0x10 bytes of the secret_sector are used as a key to decrypt a KeyX from the
     // native_firm
     const std::string filepath =
-        FileUtil::GetUserPath(FileUtil::UserPath::SysDataDir) + SECRET_SECTOR;
-    auto secret = FileUtil::IOFile(filepath, "rb");
+        Common::FS::GetUserPath(Common::FS::UserPath::SysDataDir) + SECRET_SECTOR;
+    auto secret = Common::FS::IOFile(filepath, "rb");
     if (!secret) {
         return;
     }
@@ -426,10 +427,11 @@ void LoadNativeFirmKeysNew3DS() {
 }
 
 void LoadPresetKeys() {
-    const std::string filepath = FileUtil::GetUserPath(FileUtil::UserPath::SysDataDir) + AES_KEYS;
-    FileUtil::CreateFullPath(filepath); // Create path if not already created
+    const std::string filepath =
+        Common::FS::GetUserPath(Common::FS::UserPath::SysDataDir) + AES_KEYS;
+    Common::FS::CreateFullPath(filepath); // Create path if not already created
     std::ifstream file;
-    OpenFStream(file, filepath, std::ios_base::in);
+    Common::FS::OpenFStream(file, filepath, std::ios_base::in);
     if (!file) {
         return;
     }

@@ -384,7 +384,7 @@ Movie::ValidationResult Movie::ValidateHeader(const CTMHeader& header, u64 progr
 
 void Movie::SaveMovie() {
     LOG_INFO(Movie, "Saving recorded movie to '{}'", record_movie_file);
-    FileUtil::IOFile save_record(record_movie_file, "wb");
+    Common::FS::IOFile save_record(record_movie_file, "wb");
 
     if (!save_record.IsGood()) {
         LOG_ERROR(Movie, "Unable to open file to save movie");
@@ -413,7 +413,7 @@ void Movie::SaveMovie() {
 void Movie::StartPlayback(const std::string& movie_file,
                           std::function<void()> completion_callback) {
     LOG_INFO(Movie, "Loading Movie for playback");
-    FileUtil::IOFile save_record(movie_file, "rb");
+    Common::FS::IOFile save_record(movie_file, "rb");
     const u64 size = save_record.GetSize();
 
     if (save_record.IsGood() && size > sizeof(CTMHeader)) {
@@ -438,7 +438,7 @@ void Movie::StartRecording(const std::string& movie_file) {
 }
 
 static boost::optional<CTMHeader> ReadHeader(const std::string& movie_file) {
-    FileUtil::IOFile save_record(movie_file, "rb");
+    Common::FS::IOFile save_record(movie_file, "rb");
     const u64 size = save_record.GetSize();
 
     if (!save_record || size <= sizeof(CTMHeader)) {

@@ -27,7 +27,7 @@ namespace Core {
 class System;
 }
 
-namespace FileUtil {
+namespace Common::FS {
 class IOFile;
 }
 
@@ -49,9 +49,9 @@ public:
     ShaderDiskCacheRaw() = default;
     ~ShaderDiskCacheRaw() = default;
 
-    bool Load(FileUtil::IOFile& file);
+    bool Load(Common::FS::IOFile& file);
 
-    bool Save(FileUtil::IOFile& file) const;
+    bool Save(Common::FS::IOFile& file) const;
 
     u64 GetUniqueIdentifier() const {
         return unique_identifier;
@@ -121,7 +121,7 @@ public:
 private:
     /// Loads the transferable cache. Returns empty on failure.
     std::optional<std::pair<ShaderDecompiledMap, ShaderDumpsMap>> LoadPrecompiledFile(
-        FileUtil::IOFile& file);
+        Common::FS::IOFile& file);
 
     /// Loads a decompiled cache entry from m_precompiled_cache_virtual_file. Returns empty on
     /// failure.
@@ -135,7 +135,7 @@ private:
     bool IsUsable() const;
 
     /// Opens current game's transferable file and write it's header if it doesn't exist
-    FileUtil::IOFile AppendTransferableFile();
+    Common::FS::IOFile AppendTransferableFile();
 
     /// Save precompiled header to precompiled_cache_in_memory
     void SavePrecompiledHeaderToVirtualPrecompiledCache();

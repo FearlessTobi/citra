@@ -43,7 +43,7 @@ void GameListWorker::AddFstEntriesToGameList(const std::string& dir_path, unsign
         }
 
         const std::string physical_name = directory + DIR_SEP + virtual_name;
-        const bool is_dir = FileUtil::IsDirectory(physical_name);
+        const bool is_dir = Common::FS::IsDirectory(physical_name);
         if (!is_dir && HasSupportedFileExtension(physical_name)) {
             std::unique_ptr<Loader::AppLoader> loader = Loader::GetLoader(physical_name);
             if (!loader) {
@@ -67,7 +67,7 @@ void GameListWorker::AddFstEntriesToGameList(const std::string& dir_path, unsign
             if (!(program_id & ~0x00040000FFFFFFFF)) {
                 std::string update_path = Service::AM::GetTitleContentPath(
                     Service::FS::MediaType::SDMC, program_id | 0x0000000E00000000);
-                if (FileUtil::Exists(update_path)) {
+                if (Common::FS::Exists(update_path)) {
                     std::unique_ptr<Loader::AppLoader> update_loader =
                         Loader::GetLoader(update_path);
                     if (update_loader) {
@@ -101,7 +101,7 @@ void GameListWorker::AddFstEntriesToGameList(const std::string& dir_path, unsign
                     new GameListItemRegion(smdh),
                     new GameListItem(
                         QString::fromStdString(Loader::GetFileTypeString(loader->GetFileType()))),
-                    new GameListItemSize(FileUtil::GetSize(physical_name)),
+                    new GameListItemSize(Common::FS::GetSize(physical_name)),
                 },
                 parent_dir);
 
@@ -113,7 +113,7 @@ void GameListWorker::AddFstEntriesToGameList(const std::string& dir_path, unsign
         return true;
     };
 
-    FileUtil::ForeachDirectoryEntry(nullptr, dir_path, callback);
+    Common::FS::ForeachDirectoryEntry(nullptr, dir_path, callback);
 }
 
 void GameListWorker::run() {
@@ -121,12 +121,12 @@ void GameListWorker::run() {
     for (UISettings::GameDir& game_dir : game_dirs) {
         if (game_dir.path == QStringLiteral("INSTALLED")) {
             QString games_path =
-                QString::fromStdString(FileUtil::GetUserPath(FileUtil::UserPath::SDMCDir)) +
+                QString::fromStdString(Common::FS::GetUserPath(Common::FS::UserPath::SDMCDir)) +
                 QStringLiteral("Nintendo "
                                "3DS/00000000000000000000000000000000/"
                                "00000000000000000000000000000000/title/00040000");
             QString demos_path =
-                QString::fromStdString(FileUtil::GetUserPath(FileUtil::UserPath::SDMCDir)) +
+                QString::fromStdString(Common::FS::GetUserPath(Common::FS::UserPath::SDMCDir)) +
                 QStringLiteral(
                     "Nintendo "
                     "3DS/00000000000000000000000000000000/00000000000000000000000000000000/title/"
@@ -139,7 +139,7 @@ void GameListWorker::run() {
             AddFstEntriesToGameList(demos_path.toStdString(), 2, game_list_dir);
         } else if (game_dir.path == QStringLiteral("SYSTEM")) {
             QString path =
-                QString::fromStdString(FileUtil::GetUserPath(FileUtil::UserPath::NANDDir)) +
+                QString::fromStdString(Common::FS::GetUserPath(Common::FS::UserPath::NANDDir)) +
                 QStringLiteral("00000000000000000000000000000000/title/00040010");
             watch_list.append(path);
             auto* const game_list_dir = new GameListDir(game_dir, GameListItemType::SystemDir);

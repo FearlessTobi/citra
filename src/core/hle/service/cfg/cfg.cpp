@@ -560,7 +560,7 @@ ResultCode Module::FormatConfig() {
 } // namespace Service::CFG
 
 ResultCode Module::LoadConfigNANDSaveFile() {
-    const std::string& nand_directory = FileUtil::GetUserPath(FileUtil::UserPath::NANDDir);
+    const std::string& nand_directory = Common::FS::GetUserPath(Common::FS::UserPath::NANDDir);
     FileSys::ArchiveFactory_SystemSaveData systemsavedata_factory(nand_directory);
 
     // Open the SystemSaveData archive 0x00010017

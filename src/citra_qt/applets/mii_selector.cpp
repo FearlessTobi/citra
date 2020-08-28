@@ -34,7 +34,7 @@ QtMiiSelectorDialog::QtMiiSelectorDialog(QWidget* parent, QtMiiSelector* mii_sel
     miis.push_back(HLE::Applets::MiiSelector::GetStandardMiiResult().selected_mii_data);
     combobox->addItem(tr("Standard Mii"));
 
-    std::string nand_directory{FileUtil::GetUserPath(FileUtil::UserPath::NANDDir)};
+    std::string nand_directory{Common::FS::GetUserPath(Common::FS::UserPath::NANDDir)};
     FileSys::ArchiveFactory_ExtSaveData extdata_archive_factory(nand_directory, true);
 
     auto archive_result = extdata_archive_factory.Open(Service::PTM::ptm_shared_extdata_id, 0);

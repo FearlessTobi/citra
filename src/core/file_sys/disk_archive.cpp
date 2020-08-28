@@ -58,7 +58,7 @@ bool DiskFile::Close() const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 DiskDirectory::DiskDirectory(const std::string& path) {
-    unsigned size = FileUtil::ScanDirectoryTree(path, directory);
+    unsigned size = Common::FS::ScanDirectoryTree(path, directory);
     directory.size = size;
     directory.isDirectory = true;
     children_iterator = directory.children.begin();
@@ -68,7 +68,7 @@ u32 DiskDirectory::Read(const u32 count, Entry* entries) {
     u32 entries_read = 0;
 
     while (entries_read < count && children_iterator != directory.children.cend()) {
-        const FileUtil::FSTEntry& file = *children_iterator;
+        const Common::FS::FSTEntry& file = *children_iterator;
         const std::string& filename = file.virtualName;
         Entry& entry = entries[entries_read];
 
@@ -81,7 +81,7 @@ u32 DiskDirectory::Read(const u32 count, Entry* entries) {
                 break;
         }
 
-        FileUtil::SplitFilename83(filename, entry.short_name, entry.extension);
+        Common::FS::SplitFilename83(filename, entry.short_name, entry.extension);
 
         entry.is_directory = file.isDirectory;
         entry.is_hidden = (filename[0] == '.');

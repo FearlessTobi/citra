@@ -32,18 +32,18 @@ static u64 GenerateTelemetryId() {
 
 u64 GetTelemetryId() {
     u64 telemetry_id{};
-    const std::string filename{FileUtil::GetUserPath(FileUtil::UserPath::ConfigDir) +
+    const std::string filename{Common::FS::GetUserPath(Common::FS::UserPath::ConfigDir) +
                                "telemetry_id"};
 
-    if (FileUtil::Exists(filename)) {
-        FileUtil::IOFile file(filename, "rb");
+    if (Common::FS::Exists(filename)) {
+        Common::FS::IOFile file(filename, "rb");
         if (!file.IsOpen()) {
             LOG_ERROR(Core, "failed to open telemetry_id: {}", filename);
             return {};
         }
         file.ReadBytes(&telemetry_id, sizeof(u64));
     } else {
-        FileUtil::IOFile file(filename, "wb");
+        Common::FS::IOFile file(filename, "wb");
         if (!file.IsOpen()) {
             LOG_ERROR(Core, "failed to open telemetry_id: {}", filename);
             return {};
@@ -57,10 +57,10 @@ u64 GetTelemetryId() {
 
 u64 RegenerateTelemetryId() {
     const u64 new_telemetry_id{GenerateTelemetryId()};
-    const std::string filename{FileUtil::GetUserPath(FileUtil::UserPath::ConfigDir) +
+    const std::string filename{Common::FS::GetUserPath(Common::FS::UserPath::ConfigDir) +
                                "telemetry_id"};
 
-    FileUtil::IOFile file(filename, "wb");
+    Common::FS::IOFile file(filename, "wb");
     if (!file.IsOpen()) {
         LOG_ERROR(Core, "failed to open telemetry_id: {}", filename);
         return {};

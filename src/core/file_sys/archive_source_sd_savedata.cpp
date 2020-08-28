@@ -45,7 +45,7 @@ ArchiveSource_SDSaveData::ArchiveSource_SDSaveData(const std::string& sdmc_direc
 
 ResultVal<std::unique_ptr<ArchiveBackend>> ArchiveSource_SDSaveData::Open(u64 program_id) {
     std::string concrete_mount_point = GetSaveDataPath(mount_point, program_id);
-    if (!FileUtil::Exists(concrete_mount_point)) {
+    if (!Common::FS::Exists(concrete_mount_point)) {
         // When a SaveData archive is created for the first time, it is not yet formatted and the
         // save file/directory structure expected by the game has not yet been initialized.
         // Returning the NotFormatted error code will signal the game to provision the SaveData
@@ -60,12 +60,12 @@ ResultVal<std::unique_ptr<ArchiveBackend>> ArchiveSource_SDSaveData::Open(u64 pr
 ResultCode ArchiveSource_SDSaveData::Format(u64 program_id,
                                             const FileSys::ArchiveFormatInfo& format_info) {
     std::string concrete_mount_point = GetSaveDataPath(mount_point, program_id);
-    FileUtil::DeleteDirRecursively(concrete_mount_point);
-    FileUtil::CreateFullPath(concrete_mount_point);
+    Common::FS::DeleteDirRecursively(concrete_mount_point);
+    Common::FS::CreateFullPath(concrete_mount_point);
 
     // Write the format metadata
     std::string metadata_path = GetSaveDataMetadataPath(mount_point, program_id);
-    FileUtil::IOFile file(metadata_path, "wb");
+    Common::FS::IOFile file(metadata_path, "wb");
 
     if (file.IsOpen()) {
         file.WriteBytes(&format_info, sizeof(format_info));
@@ -76,7 +76,7 @@ ResultCode ArchiveSource_SDSaveData::Format(u64 program_id,
 
 ResultVal<ArchiveFormatInfo> ArchiveSource_SDSaveData::GetFormatInfo(u64 program_id) const {
     std::string metadata_path = GetSaveDataMetadataPath(mount_point, program_id);
-    FileUtil::IOFile file(metadata_path, "rb");
+    Common::FS::IOFile file(metadata_path, "rb");
 
     if (!file.IsOpen()) {
         LOG_ERROR(Service_FS, "Could not open metadata information for archive");

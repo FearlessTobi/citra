@@ -116,7 +116,7 @@ static bool LZSS_Decompress(const u8* compressed, u32 compressed_size, u8* decom
 
 NCCHContainer::NCCHContainer(const std::string& filepath, u32 ncch_offset, u32 partition)
     : ncch_offset(ncch_offset), partition(partition), filepath(filepath) {
-    file = FileUtil::IOFile(filepath, "rb");
+    file = Common::FS::IOFile(filepath, "rb");
 }
 
 Loader::ResultStatus NCCHContainer::OpenFile(const std::string& filepath, u32 ncch_offset,
@@ -124,7 +124,7 @@ Loader::ResultStatus NCCHContainer::OpenFile(const std::string& filepath, u32 nc
     this->filepath = filepath;
     this->ncch_offset = ncch_offset;
     this->partition = partition;
-    file = FileUtil::IOFile(filepath, "rb");
+    file = Common::FS::IOFile(filepath, "rb");
 
     if (!file.IsOpen()) {
         LOG_WARNING(Service_FS, "Failed to open {}", filepath);
@@ -325,7 +325,7 @@ Loader::ResultStatus NCCHContainer::Load() {
 
         // System archives and DLC don't have an extended header but have RomFS
         if (ncch_header.extended_header_size) {
-            auto read_exheader = [this](FileUtil::IOFile& file) {
+            auto read_exheader = [this](Common::FS::IOFile& file) {
                 const std::size_t size = sizeof(exheader_header);
                 return file && file.ReadBytes(&exheader_header, size) == size;
             };
@@ -354,9 +354,9 @@ Loader::ResultStatus NCCHContainer::Load() {
                 }
             }
 
-            const auto mods_path =
-                fmt::format("{}mods/{:016X}/", FileUtil::GetUserPath(FileUtil::UserPath::LoadDir),
-                            GetModId(ncch_header.program_id));
+            const auto mods_path = fmt::format(
+                "{}mods/{:016X}/", Common::FS::GetUserPath(Common::FS::UserPath::LoadDir),
+                GetModId(ncch_header.program_id));
             const std::array<std::string, 2> exheader_override_paths{{
                 mods_path + "exheader.bin",
                 filepath + ".exheader",
@@ -364,7 +364,7 @@ Loader::ResultStatus NCCHContainer::Load() {
 
             bool has_exheader_override = false;
             for (const auto& path : exheader_override_paths) {
-                FileUtil::IOFile exheader_override_file{path, "rb"};
+                Common::FS::IOFile exheader_override_file{path, "rb"};
                 if (read_exheader(exheader_override_file)) {
                     has_exheader_override = true;
                     break;
@@ -425,7 +425,7 @@ Loader::ResultStatus NCCHContainer::Load() {
                     .ProcessData(data, data, sizeof(exefs_header));
             }
 
-            exefs_file = FileUtil::IOFile(filepath, "rb");
+            exefs_file = Common::FS::IOFile(filepath, "rb");
             has_exefs = true;
         }
 
@@ -446,15 +446,15 @@ Loader::ResultStatus NCCHContainer::Load() {
 Loader::ResultStatus NCCHContainer::LoadOverrides() {
     // Check for split-off files, mark the archive as tainted if we will use them
     std::string romfs_override = filepath + ".romfs";
-    if (FileUtil::Exists(romfs_override)) {
+    if (Common::FS::Exists(romfs_override)) {
         is_tainted = true;
     }
 
     // If we have a split-off exefs file/folder, it takes priority
     std::string exefs_override = filepath + ".exefs";
     std::string exefsdir_override = filepath + ".exefsdir/";
-    if (FileUtil::Exists(exefs_override)) {
-        exefs_file = FileUtil::IOFile(exefs_override, "rb");
+    if (Common::FS::Exists(exefs_override)) {
+        exefs_file = Common::FS::IOFile(exefs_override, "rb");
 
         if (exefs_file.ReadBytes(&exefs_header, sizeof(ExeFs_Header)) == sizeof(ExeFs_Header)) {
             LOG_DEBUG(Service_FS, "Loading ExeFS section from {}", exefs_override);
@@ -462,9 +462,10 @@ Loader::ResultStatus NCCHContainer::LoadOverrides() {
             is_tainted = true;
             has_exefs = true;
         } else {
-            exefs_file = FileUtil::IOFile(filepath, "rb");
+            exefs_file = Common::FS::IOFile(filepath, "rb");
         }
-    } else if (FileUtil::Exists(exefsdir_override) && FileUtil::IsDirectory(exefsdir_override)) {
+    } else if (Common::FS::Exists(exefsdir_override) &&
+               Common::FS::IsDirectory(exefsdir_override)) {
         is_tainted = true;
     }
 
@@ -579,7 +580,7 @@ Loader::ResultStatus NCCHContainer::ApplyCodePatch(std::vector<u8>& code) const 
     };
 
     const auto mods_path =
-        fmt::format("{}mods/{:016X}/", FileUtil::GetUserPath(FileUtil::UserPath::LoadDir),
+        fmt::format("{}mods/{:016X}/", Common::FS::GetUserPath(Common::FS::UserPath::LoadDir),
                     GetModId(ncch_header.program_id));
     const std::array<PatchLocation, 6> patch_paths{{
         {mods_path + "exefs/code.ips", Patch::ApplyIpsPatch},
@@ -591,7 +592,7 @@ Loader::ResultStatus NCCHContainer::ApplyCodePatch(std::vector<u8>& code) const 
     }};
 
     for (const PatchLocation& info : patch_paths) {
-        FileUtil::IOFile file{info.path, "rb"};
+        Common::FS::IOFile file{info.path, "rb"};
         if (!file)
             continue;
 
@@ -625,7 +626,7 @@ Loader::ResultStatus NCCHContainer::LoadOverrideExeFSSection(const char* name,
         return Loader::ResultStatus::Error;
 
     const auto mods_path =
-        fmt::format("{}mods/{:016X}/", FileUtil::GetUserPath(FileUtil::UserPath::LoadDir),
+        fmt::format("{}mods/{:016X}/", Common::FS::GetUserPath(Common::FS::UserPath::LoadDir),
                     GetModId(ncch_header.program_id));
     const std::array<std::string, 3> override_paths{{
         mods_path + "exefs/" + override_name,
@@ -634,7 +635,7 @@ Loader::ResultStatus NCCHContainer::LoadOverrideExeFSSection(const char* name,
     }};
 
     for (const auto& path : override_paths) {
-        FileUtil::IOFile section_file(path, "rb");
+        Common::FS::IOFile section_file(path, "rb");
 
         if (section_file.IsOpen()) {
             auto section_size = section_file.GetSize();
@@ -677,7 +678,7 @@ Loader::ResultStatus NCCHContainer::ReadRomFS(std::shared_ptr<RomFSReader>& romf
         return Loader::ResultStatus::Error;
 
     // We reopen the file, to allow its position to be independent from file's
-    FileUtil::IOFile romfs_file_inner(filepath, "rb");
+    Common::FS::IOFile romfs_file_inner(filepath, "rb");
     if (!romfs_file_inner.IsOpen())
         return Loader::ResultStatus::Error;
 
@@ -692,10 +693,10 @@ Loader::ResultStatus NCCHContainer::ReadRomFS(std::shared_ptr<RomFSReader>& romf
     }
 
     const auto path =
-        fmt::format("{}mods/{:016X}/", FileUtil::GetUserPath(FileUtil::UserPath::LoadDir),
+        fmt::format("{}mods/{:016X}/", Common::FS::GetUserPath(Common::FS::UserPath::LoadDir),
                     GetModId(ncch_header.program_id));
     if (use_layered_fs &&
-        (FileUtil::Exists(path + "romfs/") || FileUtil::Exists(path + "romfs_ext/"))) {
+        (Common::FS::Exists(path + "romfs/") || Common::FS::Exists(path + "romfs_ext/"))) {
 
         romfs_file = std::make_shared<LayeredFS>(std::move(direct_romfs), path + "romfs/",
                                                  path + "romfs_ext/");
@@ -724,8 +725,8 @@ Loader::ResultStatus NCCHContainer::DumpRomFS(const std::string& target_path) {
 Loader::ResultStatus NCCHContainer::ReadOverrideRomFS(std::shared_ptr<RomFSReader>& romfs_file) {
     // Check for RomFS overrides
     std::string split_filepath = filepath + ".romfs";
-    if (FileUtil::Exists(split_filepath)) {
-        FileUtil::IOFile romfs_file_inner(split_filepath, "rb");
+    if (Common::FS::Exists(split_filepath)) {
+        Common::FS::IOFile romfs_file_inner(split_filepath, "rb");
         if (romfs_file_inner.IsOpen()) {
             LOG_WARNING(Service_FS, "File {} overriding built-in RomFS; LayeredFS not enabled",
                         split_filepath);

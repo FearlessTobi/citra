@@ -25,9 +25,9 @@ namespace FileSys {
 
 class DiskFile : public FileBackend {
 public:
-    DiskFile(FileUtil::IOFile&& file_, const Mode& mode_,
+    DiskFile(Common::FS::IOFile&& file_, const Mode& mode_,
              std::unique_ptr<DelayGenerator> delay_generator_)
-        : file(new FileUtil::IOFile(std::move(file_))) {
+        : file(new Common::FS::IOFile(std::move(file_))) {
         delay_generator = std::move(delay_generator_);
         mode.hex = mode_.hex;
     }
@@ -45,7 +45,7 @@ public:
 
 protected:
     Mode mode;
-    std::unique_ptr<FileUtil::IOFile> file;
+    std::unique_ptr<Common::FS::IOFile> file;
 
 private:
     DiskFile() = default;
@@ -74,11 +74,11 @@ public:
     }
 
 protected:
-    FileUtil::FSTEntry directory{};
+    Common::FS::FSTEntry directory{};
 
     // We need to remember the last entry we returned, so a subsequent call to Read will continue
     // from the next one.  This iterator will always point to the next unread entry.
-    std::vector<FileUtil::FSTEntry>::iterator children_iterator;
+    std::vector<Common::FS::FSTEntry>::iterator children_iterator;
 
 private:
     DiskDirectory() = default;

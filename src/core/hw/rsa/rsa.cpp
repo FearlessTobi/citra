@@ -52,8 +52,9 @@ void InitSlots() {
         return;
     initialized = true;
 
-    const std::string filepath = FileUtil::GetUserPath(FileUtil::UserPath::SysDataDir) + BOOTROM9;
-    FileUtil::IOFile file(filepath, "rb");
+    const std::string filepath =
+        Common::FS::GetUserPath(Common::FS::UserPath::SysDataDir) + BOOTROM9;
+    Common::FS::IOFile file(filepath, "rb");
     if (!file) {
         return;
     }

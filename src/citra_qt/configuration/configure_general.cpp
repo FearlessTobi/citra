@@ -112,7 +112,7 @@ void ConfigureGeneral::ResetDefaults() {
     if (answer == QMessageBox::No)
         return;
 
-    FileUtil::Delete(FileUtil::GetUserPath(FileUtil::UserPath::ConfigDir) + "qt-config.ini");
+    Common::FS::Delete(Common::FS::GetUserPath(Common::FS::UserPath::ConfigDir) + "qt-config.ini");
     std::exit(0);
 }
 

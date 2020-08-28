@@ -21,7 +21,7 @@
 
 Config::Config() {
     // TODO: Don't hardcode the path; let the frontend decide where to put the config files.
-    sdl2_config_loc = FileUtil::GetUserPath(FileUtil::UserPath::ConfigDir) + "sdl2-config.ini";
+    sdl2_config_loc = Common::FS::GetUserPath(Common::FS::UserPath::ConfigDir) + "sdl2-config.ini";
     sdl2_config = std::make_unique<INIReader>(sdl2_config_loc);
 
     Reload();
@@ -34,8 +34,8 @@ bool Config::LoadINI(const std::string& default_contents, bool retry) {
     if (sdl2_config->ParseError() < 0) {
         if (retry) {
             LOG_WARNING(Config, "Failed to load {}. Creating file from defaults...", location);
-            FileUtil::CreateFullPath(location);
-            FileUtil::WriteStringToFile(true, location, default_contents);
+            Common::FS::CreateFullPath(location);
+            Common::FS::WriteStringToFile(true, location, default_contents);
             sdl2_config = std::make_unique<INIReader>(location); // Reopen file
 
             return LoadINI(default_contents, false);

@@ -92,7 +92,7 @@ static std::string TokenFromDisplayToken(const std::string& display_token) {
 
 static Network::Room::BanList LoadBanList(const std::string& path) {
     std::ifstream file;
-    OpenFStream(file, path, std::ios_base::in);
+    Common::FS::OpenFStream(file, path, std::ios_base::in);
     if (!file || file.eof()) {
         std::cout << "Could not open ban list!\n\n";
         return {};
@@ -130,7 +130,7 @@ static Network::Room::BanList LoadBanList(const std::string& path) {
 
 static void SaveBanList(const Network::Room::BanList& ban_list, const std::string& path) {
     std::ofstream file;
-    OpenFStream(file, path, std::ios_base::out);
+    Common::FS::OpenFStream(file, path, std::ios_base::out);
     if (!file) {
         std::cout << "Could not save ban list!\n\n";
         return;
@@ -155,8 +155,8 @@ static void SaveBanList(const Network::Room::BanList& ban_list, const std::strin
 static void InitializeLogging(const std::string& log_file) {
     Log::AddBackend(std::make_unique<Log::ColorConsoleBackend>());
 
-    const std::string& log_dir = FileUtil::GetUserPath(FileUtil::UserPath::LogDir);
-    FileUtil::CreateFullPath(log_dir);
+    const std::string& log_dir = Common::FS::GetUserPath(Common::FS::UserPath::LogDir);
+    Common::FS::CreateFullPath(log_dir);
     Log::AddBackend(std::make_unique<Log::FileBackend>(log_dir + log_file));
 
 #ifdef _WIN32

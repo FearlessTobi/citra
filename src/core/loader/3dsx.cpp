@@ -94,7 +94,7 @@ static u32 TranslateAddr(u32 addr, const THREEloadinfo* loadinfo, u32* offsets) 
 
 using Kernel::CodeSet;
 
-static THREEDSX_Error Load3DSXFile(FileUtil::IOFile& file, u32 base_addr,
+static THREEDSX_Error Load3DSXFile(Common::FS::IOFile& file, u32 base_addr,
                                    std::shared_ptr<CodeSet>* out_codeset) {
     if (!file.IsOpen())
         return ERROR_FILE;
@@ -243,7 +243,7 @@ static THREEDSX_Error Load3DSXFile(FileUtil::IOFile& file, u32 base_addr,
     return ERROR_NONE;
 }
 
-FileType AppLoader_THREEDSX::IdentifyType(FileUtil::IOFile& file) {
+FileType AppLoader_THREEDSX::IdentifyType(Common::FS::IOFile& file) {
     u32 magic;
     file.Seek(0, SEEK_SET);
     if (1 != file.ReadArray<u32>(&magic, 1))
@@ -310,7 +310,7 @@ ResultStatus AppLoader_THREEDSX::ReadRomFS(std::shared_ptr<FileSys::RomFSReader>
         LOG_DEBUG(Loader, "RomFS size:             {:#010X}", romfs_size);
 
         // We reopen the file, to allow its position to be independent from file's
-        FileUtil::IOFile romfs_file_inner(filepath, "rb");
+        Common::FS::IOFile romfs_file_inner(filepath, "rb");
         if (!romfs_file_inner.IsOpen())
             return ResultStatus::Error;
 

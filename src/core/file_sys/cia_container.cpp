@@ -66,7 +66,7 @@ Loader::ResultStatus CIAContainer::Load(const FileBackend& backend) {
 }
 
 Loader::ResultStatus CIAContainer::Load(const std::string& filepath) {
-    FileUtil::IOFile file(filepath, "rb");
+    Common::FS::IOFile file(filepath, "rb");
     if (!file.IsOpen())
         return Loader::ResultStatus::Error;
 

@@ -21,7 +21,8 @@ ConfigureDebug::ConfigureDebug(QWidget* parent)
     SetConfiguration();
 
     connect(ui->open_log_button, &QPushButton::clicked, []() {
-        QString path = QString::fromStdString(FileUtil::GetUserPath(FileUtil::UserPath::LogDir));
+        QString path =
+            QString::fromStdString(Common::FS::GetUserPath(Common::FS::UserPath::LogDir));
         QDesktopServices::openUrl(QUrl::fromLocalFile(path));
     });
     ui->toggle_cpu_jit->setEnabled(!Core::System::GetInstance().IsPoweredOn());

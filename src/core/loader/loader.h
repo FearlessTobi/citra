@@ -41,7 +41,7 @@ enum class FileType {
  * @param file open file
  * @return FileType of file
  */
-FileType IdentifyFile(FileUtil::IOFile& file);
+FileType IdentifyFile(Common::FS::IOFile& file);
 
 /**
  * Identifies the type of a bootable file based on the magic value in its header.
@@ -84,7 +84,7 @@ constexpr u32 MakeMagic(char a, char b, char c, char d) {
 /// Interface for loading an application
 class AppLoader : NonCopyable {
 public:
-    explicit AppLoader(FileUtil::IOFile&& file) : file(std::move(file)) {}
+    explicit AppLoader(Common::FS::IOFile&& file) : file(std::move(file)) {}
     virtual ~AppLoader() {}
 
     /**
@@ -232,7 +232,7 @@ public:
     }
 
 protected:
-    FileUtil::IOFile file;
+    Common::FS::IOFile file;
     bool is_loaded = false;
 };
 

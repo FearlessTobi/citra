@@ -17,7 +17,7 @@
 namespace FileSys {
 
 Loader::ResultStatus TitleMetadata::Load(const std::string& file_path) {
-    FileUtil::IOFile file(file_path, "rb");
+    Common::FS::IOFile file(file_path, "rb");
     if (!file.IsOpen())
         return Loader::ResultStatus::Error;
 
@@ -78,7 +78,7 @@ Loader::ResultStatus TitleMetadata::Load(const std::vector<u8>& file_data, std::
 }
 
 Loader::ResultStatus TitleMetadata::Save(const std::string& file_path) {
-    FileUtil::IOFile file(file_path, "wb");
+    Common::FS::IOFile file(file_path, "wb");
     if (!file.IsOpen())
         return Loader::ResultStatus::Error;
 

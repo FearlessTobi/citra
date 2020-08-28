@@ -32,10 +32,10 @@
 namespace Service::FS {
 
 MediaType GetMediaTypeFromPath(std::string_view path) {
-    if (path.rfind(FileUtil::GetUserPath(FileUtil::UserPath::NANDDir), 0) == 0) {
+    if (path.rfind(Common::FS::GetUserPath(Common::FS::UserPath::NANDDir), 0) == 0) {
         return MediaType::NAND;
     }
-    if (path.rfind(FileUtil::GetUserPath(FileUtil::UserPath::SDMCDir), 0) == 0) {
+    if (path.rfind(Common::FS::GetUserPath(Common::FS::UserPath::SDMCDir), 0) == 0) {
         return MediaType::SDMC;
     }
     return MediaType::GameCard;
@@ -263,9 +263,9 @@ ResultCode ArchiveManager::DeleteExtSaveData(MediaType media_type, u32 high, u32
 
     std::string media_type_directory;
     if (media_type == MediaType::NAND) {
-        media_type_directory = FileUtil::GetUserPath(FileUtil::UserPath::NANDDir);
+        media_type_directory = Common::FS::GetUserPath(Common::FS::UserPath::NANDDir);
     } else if (media_type == MediaType::SDMC) {
-        media_type_directory = FileUtil::GetUserPath(FileUtil::UserPath::SDMCDir);
+        media_type_directory = Common::FS::GetUserPath(Common::FS::UserPath::SDMCDir);
     } else {
         LOG_ERROR(Service_FS, "Unsupported media type {}", static_cast<u32>(media_type));
         return ResultCode(-1); // TODO(Subv): Find the right error code
@@ -275,7 +275,7 @@ ResultCode ArchiveManager::DeleteExtSaveData(MediaType media_type, u32 high, u32
     std::string base_path =
         FileSys::GetExtDataContainerPath(media_type_directory, media_type == MediaType::NAND);
     std::string extsavedata_path = FileSys::GetExtSaveDataPath(base_path, path);
-    if (FileUtil::Exists(extsavedata_path) && !FileUtil::DeleteDirRecursively(extsavedata_path))
+    if (Common::FS::Exists(extsavedata_path) && !Common::FS::DeleteDirRecursively(extsavedata_path))
         return ResultCode(-1); // TODO(Subv): Find the right error code
     return RESULT_SUCCESS;
 }
@@ -284,10 +284,10 @@ ResultCode ArchiveManager::DeleteSystemSaveData(u32 high, u32 low) {
     // Construct the binary path to the archive first
     const FileSys::Path path = FileSys::ConstructSystemSaveDataBinaryPath(high, low);
 
-    const std::string& nand_directory = FileUtil::GetUserPath(FileUtil::UserPath::NANDDir);
+    const std::string& nand_directory = Common::FS::GetUserPath(Common::FS::UserPath::NANDDir);
     const std::string base_path = FileSys::GetSystemSaveDataContainerPath(nand_directory);
     const std::string systemsavedata_path = FileSys::GetSystemSaveDataPath(base_path, path);
-    if (!FileUtil::DeleteDirRecursively(systemsavedata_path)) {
+    if (!Common::FS::DeleteDirRecursively(systemsavedata_path)) {
         return ResultCode(-1); // TODO(Subv): Find the right error code
     }
 
@@ -298,10 +298,10 @@ ResultCode ArchiveManager::CreateSystemSaveData(u32 high, u32 low) {
     // Construct the binary path to the archive first
     const FileSys::Path path = FileSys::ConstructSystemSaveDataBinaryPath(high, low);
 
-    const std::string& nand_directory = FileUtil::GetUserPath(FileUtil::UserPath::NANDDir);
+    const std::string& nand_directory = Common::FS::GetUserPath(Common::FS::UserPath::NANDDir);
     const std::string base_path = FileSys::GetSystemSaveDataContainerPath(nand_directory);
     const std::string systemsavedata_path = FileSys::GetSystemSaveDataPath(base_path, path);
-    if (!FileUtil::CreateFullPath(systemsavedata_path)) {
+    if (!Common::FS::CreateFullPath(systemsavedata_path)) {
         return ResultCode(-1); // TODO(Subv): Find the right error code
     }
 
@@ -322,8 +322,8 @@ void ArchiveManager::RegisterArchiveTypes() {
     // TODO(Subv): Add the other archive types (see here for the known types:
     // http://3dbrew.org/wiki/FS:OpenArchive#Archive_idcodes).
 
-    std::string sdmc_directory = FileUtil::GetUserPath(FileUtil::UserPath::SDMCDir);
-    std::string nand_directory = FileUtil::GetUserPath(FileUtil::UserPath::NANDDir);
+    std::string sdmc_directory = Common::FS::GetUserPath(Common::FS::UserPath::SDMCDir);
+    std::string nand_directory = Common::FS::GetUserPath(Common::FS::UserPath::NANDDir);
     auto sdmc_factory = std::make_unique<FileSys::ArchiveFactory_SDMC>(sdmc_directory);
     if (sdmc_factory->Initialize())
         RegisterArchiveType(std::move(sdmc_factory), ArchiveIdCode::SDMC);

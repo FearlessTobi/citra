@@ -18,8 +18,8 @@
 
 Config::Config() {
     // TODO: Don't hardcode the path; let the frontend decide where to put the config files.
-    qt_config_loc = FileUtil::GetUserPath(FileUtil::UserPath::ConfigDir) + "qt-config.ini";
-    FileUtil::CreateFullPath(qt_config_loc);
+    qt_config_loc = Common::FS::GetUserPath(Common::FS::UserPath::ConfigDir) + "qt-config.ini";
+    Common::FS::CreateFullPath(qt_config_loc);
     qt_config =
         std::make_unique<QSettings>(QString::fromStdString(qt_config_loc), QSettings::IniFormat);
     Reload();

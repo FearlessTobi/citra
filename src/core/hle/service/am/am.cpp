@@ -110,7 +110,7 @@ ResultCode CIAFile::WriteTitleMetadata() {
     // If a TMD already exists for this app (ie 00000000.tmd), the incoming TMD
     // will be the same plus one, (ie 00000001.tmd), both will be kept until
     // the install is finalized and old contents can be discarded.
-    if (FileUtil::Exists(GetTitleMetadataPath(media_type, tmd.GetTitleID())))
+    if (Common::FS::Exists(GetTitleMetadataPath(media_type, tmd.GetTitleID())))
         is_update = true;
 
     std::string tmd_path = GetTitleMetadataPath(media_type, tmd.GetTitleID(), is_update);
@@ -118,7 +118,7 @@ ResultCode CIAFile::WriteTitleMetadata() {
     // Create content/ folder if it doesn't exist
     std::string tmd_folder;
     Common::SplitPath(tmd_path, &tmd_folder, nullptr, nullptr);
-    FileUtil::CreateFullPath(tmd_folder);
+    Common::FS::CreateFullPath(tmd_folder);
 
     // Save TMD so that we can start getting new .app paths
     if (tmd.Save(tmd_path) != Loader::ResultStatus::Success)
@@ -129,7 +129,7 @@ ResultCode CIAFile::WriteTitleMetadata() {
     Common::SplitPath(GetTitleContentPath(media_type, tmd.GetTitleID(),
                                           FileSys::TMDContentIndex::Main, is_update),
                       &app_folder, nullptr, nullptr);
-    FileUtil::CreateFullPath(app_folder);
+    Common::FS::CreateFullPath(app_folder);
 
     auto content_count = container.GetTitleMetadata().GetContentCount();
     content_written.resize(content_count);
@@ -172,8 +172,8 @@ ResultVal<std::size_t> CIAFile::WriteContentData(u64 offset, std::size_t length,
             // Since the incoming TMD has already been written, we can use GetTitleContentPath
             // to get the content paths to write to.
             FileSys::TitleMetadata tmd = container.GetTitleMetadata();
-            FileUtil::IOFile file(GetTitleContentPath(media_type, tmd.GetTitleID(), i, is_update),
-                                  content_written[i] ? "ab" : "wb");
+            Common::FS::IOFile file(GetTitleContentPath(media_type, tmd.GetTitleID(), i, is_update),
+                                    content_written[i] ? "ab" : "wb");
 
             if (!file.IsOpen()) {
                 return FileSys::ERROR_INSUFFICIENT_SPACE;
@@ -288,7 +288,7 @@ bool CIAFile::Close() const {
     // Install aborted
     if (!complete) {
         LOG_ERROR(Service_AM, "CIAFile closed prematurely, aborting install...");
-        FileUtil::DeleteDir(GetTitlePath(media_type, container.GetTitleMetadata().GetTitleID()));
+        Common::FS::DeleteDir(GetTitlePath(media_type, container.GetTitleMetadata().GetTitleID()));
         return true;
     }
 
@@ -297,7 +297,7 @@ bool CIAFile::Close() const {
         GetTitleMetadataPath(media_type, container.GetTitleMetadata().GetTitleID(), false);
     std::string new_tmd_path =
         GetTitleMetadataPath(media_type, container.GetTitleMetadata().GetTitleID(), true);
-    if (FileUtil::Exists(new_tmd_path) && old_tmd_path != new_tmd_path) {
+    if (Common::FS::Exists(new_tmd_path) && old_tmd_path != new_tmd_path) {
         FileSys::TitleMetadata old_tmd;
         FileSys::TitleMetadata new_tmd;
 
@@ -318,10 +318,10 @@ bool CIAFile::Close() const {
             if (abort)
                 break;
 
-            FileUtil::Delete(GetTitleContentPath(media_type, old_tmd.GetTitleID(), old_index));
+            Common::FS::Delete(GetTitleContentPath(media_type, old_tmd.GetTitleID(), old_index));
         }
 
-        FileUtil::Delete(old_tmd_path);
+        Common::FS::Delete(old_tmd_path);
     }
     return true;
 }
@@ -332,7 +332,7 @@ InstallStatus InstallCIA(const std::string& path,
                          std::function<ProgressCallback>&& update_callback) {
     LOG_INFO(Service_AM, "Installing {}...", path);
 
-    if (!FileUtil::Exists(path)) {
+    if (!Common::FS::Exists(path)) {
         LOG_ERROR(Service_AM, "File {} does not exist!", path);
         return InstallStatus::ErrorFileNotFound;
     }
@@ -353,7 +353,7 @@ InstallStatus InstallCIA(const std::string& path,
             }
         }
 
-        FileUtil::IOFile file(path, "rb");
+        Common::FS::IOFile file(path, "rb");
         if (!file.IsOpen())
             return InstallStatus::ErrorFailedToOpenFile;
 
@@ -377,11 +377,11 @@ InstallStatus InstallCIA(const std::string& path,
 
         LOG_INFO(Service_AM, "Installed {} successfully.", path);
 
-        const FileUtil::DirectoryEntryCallable callback =
+        const Common::FS::DirectoryEntryCallable callback =
             [&callback](u64* num_entries_out, const std::string& directory,
                         const std::string& virtual_name) -> bool {
             const std::string physical_name = directory + DIR_SEP + virtual_name;
-            const bool is_dir = FileUtil::IsDirectory(physical_name);
+            const bool is_dir = Common::FS::IsDirectory(physical_name);
             if (!is_dir) {
                 std::unique_ptr<Loader::AppLoader> loader = Loader::GetLoader(physical_name);
                 if (!loader) {
@@ -395,10 +395,10 @@ InstallStatus InstallCIA(const std::string& path,
                 }
                 return true;
             } else {
-                return FileUtil::ForeachDirectoryEntry(nullptr, physical_name, callback);
+                return Common::FS::ForeachDirectoryEntry(nullptr, physical_name, callback);
             }
         };
-        if (!FileUtil::ForeachDirectoryEntry(
+        if (!Common::FS::ForeachDirectoryEntry(
                 nullptr,
                 GetTitlePath(
                     Service::AM::GetTitleMediaType(container.GetTitleMetadata().GetTitleID()),
@@ -442,9 +442,9 @@ std::string GetTitleMetadataPath(Service::FS::MediaType media_type, u64 tid, boo
     constexpr u32 MAX_TMD_ID = 0xFFFFFFFF;
     u32 base_id = MAX_TMD_ID;
     u32 update_id = 0;
-    FileUtil::FSTEntry entries;
-    FileUtil::ScanDirectoryTree(content_path, entries);
-    for (const FileUtil::FSTEntry& entry : entries.children) {
+    Common::FS::FSTEntry entries;
+    Common::FS::ScanDirectoryTree(content_path, entries);
+    for (const Common::FS::FSTEntry& entry : entries.children) {
         std::string filename_filename, filename_extension;
         Common::SplitPath(entry.virtualName, nullptr, &filename_filename, &filename_extension);
 
@@ -525,12 +525,12 @@ std::string GetTitlePath(Service::FS::MediaType media_type, u64 tid) {
 
 std::string GetMediaTitlePath(Service::FS::MediaType media_type) {
     if (media_type == Service::FS::MediaType::NAND)
-        return fmt::format("{}{}/title/", FileUtil::GetUserPath(FileUtil::UserPath::NANDDir),
+        return fmt::format("{}{}/title/", Common::FS::GetUserPath(Common::FS::UserPath::NANDDir),
                            SYSTEM_ID);
 
     if (media_type == Service::FS::MediaType::SDMC)
         return fmt::format("{}Nintendo 3DS/{}/{}/title/",
-                           FileUtil::GetUserPath(FileUtil::UserPath::SDMCDir), SYSTEM_ID,
+                           Common::FS::GetUserPath(Common::FS::UserPath::SDMCDir), SYSTEM_ID,
                            SDCARD_ID);
 
     if (media_type == Service::FS::MediaType::GameCard) {
@@ -549,10 +549,10 @@ void Module::ScanForTitles(Service::FS::MediaType media_type) {
 
     std::string title_path = GetMediaTitlePath(media_type);
 
-    FileUtil::FSTEntry entries;
-    FileUtil::ScanDirectoryTree(title_path, entries, 1);
-    for (const FileUtil::FSTEntry& tid_high : entries.children) {
-        for (const FileUtil::FSTEntry& tid_low : tid_high.children) {
+    Common::FS::FSTEntry entries;
+    Common::FS::ScanDirectoryTree(title_path, entries, 1);
+    for (const Common::FS::FSTEntry& tid_high : entries.children) {
+        for (const Common::FS::FSTEntry& tid_low : tid_high.children) {
             std::string tid_string = tid_high.virtualName + tid_low.virtualName;
 
             if (tid_string.length() == TITLE_ID_VALID_LENGTH) {
@@ -636,7 +636,8 @@ void Module::Interface::FindDLCContentInfos(Kernel::HLERequestContext& ctx) {
             content_info.ownership =
                 OWNERSHIP_OWNED; // TODO(Steveice10): Pull this from the ticket.
 
-            if (FileUtil::Exists(GetTitleContentPath(media_type, title_id, content_requested[i]))) {
+            if (Common::FS::Exists(
+                    GetTitleContentPath(media_type, title_id, content_requested[i]))) {
                 content_info.ownership |= OWNERSHIP_DOWNLOADED;
             }
 
@@ -689,7 +690,7 @@ void Module::Interface::ListDLCContentInfos(Kernel::HLERequestContext& ctx) {
             content_info.ownership =
                 OWNERSHIP_OWNED; // TODO(Steveice10): Pull this from the ticket.
 
-            if (FileUtil::Exists(GetTitleContentPath(media_type, title_id, i))) {
+            if (Common::FS::Exists(GetTitleContentPath(media_type, title_id, i))) {
                 content_info.ownership |= OWNERSHIP_DOWNLOADED;
             }
 
@@ -807,17 +808,17 @@ void Module::Interface::DeleteUserProgram(Kernel::HLERequestContext& ctx) {
     }
     LOG_INFO(Service_AM, "Deleting title 0x{:016x}", title_id);
     std::string path = GetTitlePath(media_type, title_id);
-    if (!FileUtil::Exists(path)) {
+    if (!Common::FS::Exists(path)) {
         rb.Push(ResultCode(ErrorDescription::NotFound, ErrorModule::AM, ErrorSummary::InvalidState,
                            ErrorLevel::Permanent));
         LOG_ERROR(Service_AM, "Title not found");
         return;
     }
-    bool success = FileUtil::DeleteDirRecursively(path);
+    bool success = Common::FS::DeleteDirRecursively(path);
     am->ScanForAllTitles();
     rb.Push(RESULT_SUCCESS);
     if (!success)
-        LOG_ERROR(Service_AM, "FileUtil::DeleteDirRecursively unexpectedly failed");
+        LOG_ERROR(Service_AM, "Common::FS::DeleteDirRecursively unexpectedly failed");
 }
 
 void Module::Interface::GetProductCode(Kernel::HLERequestContext& ctx) {
@@ -826,7 +827,7 @@ void Module::Interface::GetProductCode(Kernel::HLERequestContext& ctx) {
     u64 title_id = rp.Pop<u64>();
     std::string path = GetTitleContentPath(media_type, title_id);
 
-    if (!FileUtil::Exists(path)) {
+    if (!Common::FS::Exists(path)) {
         IPC::RequestBuilder rb = rp.MakeBuilder(1, 0);
         rb.Push(ResultCode(ErrorDescription::NotFound, ErrorModule::AM, ErrorSummary::InvalidState,
                            ErrorLevel::Permanent));
@@ -1021,7 +1022,7 @@ void Module::Interface::CheckContentRights(Kernel::HLERequestContext& ctx) {
 
     // TODO(shinyquagsire23): Read tickets for this instead?
     bool has_rights =
-        FileUtil::Exists(GetTitleContentPath(Service::FS::MediaType::SDMC, tid, content_index));
+        Common::FS::Exists(GetTitleContentPath(Service::FS::MediaType::SDMC, tid, content_index));
 
     IPC::RequestBuilder rb = rp.MakeBuilder(2, 0);
     rb.Push(RESULT_SUCCESS); // No error
@@ -1037,7 +1038,7 @@ void Module::Interface::CheckContentRightsIgnorePlatform(Kernel::HLERequestConte
 
     // TODO(shinyquagsire23): Read tickets for this instead?
     bool has_rights =
-        FileUtil::Exists(GetTitleContentPath(Service::FS::MediaType::SDMC, tid, content_index));
+        Common::FS::Exists(GetTitleContentPath(Service::FS::MediaType::SDMC, tid, content_index));
 
     IPC::RequestBuilder rb = rp.MakeBuilder(2, 0);
     rb.Push(RESULT_SUCCESS); // No error
@@ -1401,17 +1402,17 @@ void Module::Interface::DeleteProgram(Kernel::HLERequestContext& ctx) {
     LOG_INFO(Service_AM, "Deleting title 0x{:016x}", title_id);
     std::string path = GetTitlePath(media_type, title_id);
     IPC::RequestBuilder rb = rp.MakeBuilder(1, 0);
-    if (!FileUtil::Exists(path)) {
+    if (!Common::FS::Exists(path)) {
         rb.Push(ResultCode(ErrorDescription::NotFound, ErrorModule::AM, ErrorSummary::InvalidState,
                            ErrorLevel::Permanent));
         LOG_ERROR(Service_AM, "Title not found");
         return;
     }
-    bool success = FileUtil::DeleteDirRecursively(path);
+    bool success = Common::FS::DeleteDirRecursively(path);
     am->ScanForAllTitles();
     rb.Push(RESULT_SUCCESS);
     if (!success)
-        LOG_ERROR(Service_AM, "FileUtil::DeleteDirRecursively unexpectedly failed");
+        LOG_ERROR(Service_AM, "Common::FS::DeleteDirRecursively unexpectedly failed");
 }
 
 void Module::Interface::GetSystemUpdaterMutex(Kernel::HLERequestContext& ctx) {

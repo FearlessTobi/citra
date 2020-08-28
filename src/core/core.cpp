@@ -247,7 +247,7 @@ System::ResultStatus System::SingleStep() {
 }
 
 System::ResultStatus System::Load(Frontend::EmuWindow& emu_window, const std::string& filepath) {
-    FileUtil::SetCurrentRomPath(filepath);
+    Common::FS::SetCurrentRomPath(filepath);
     app_loader = Loader::GetLoader(filepath);
     if (!app_loader) {
         LOG_CRITICAL(Core, "Failed to obtain loader for {}!", filepath);
@@ -313,8 +313,9 @@ System::ResultStatus System::Load(Frontend::EmuWindow& emu_window, const std::st
 
     if (Settings::values.custom_textures) {
         const u64 program_id = Kernel().GetCurrentProcess()->codeset->program_id;
-        FileUtil::CreateFullPath(fmt::format(
-            "{}textures/{:016X}/", FileUtil::GetUserPath(FileUtil::UserPath::LoadDir), program_id));
+        Common::FS::CreateFullPath(
+            fmt::format("{}textures/{:016X}/",
+                        Common::FS::GetUserPath(Common::FS::UserPath::LoadDir), program_id));
         custom_tex_cache->FindCustomTextures(program_id);
     }
     if (Settings::values.preload_textures) {

@@ -474,7 +474,7 @@ std::vector<std::unique_ptr<CheatBase>> GatewayCheat::LoadFile(const std::string
     std::vector<std::unique_ptr<CheatBase>> cheats;
 
     std::ifstream file;
-    OpenFStream(file, filepath, std::ios_base::in);
+    Common::FS::OpenFStream(file, filepath, std::ios_base::in);
     if (!file) {
         return cheats;
     }

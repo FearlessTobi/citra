@@ -22,9 +22,9 @@ TEST_CASE("PathParser", "[core][file_sys]") {
 
 TEST_CASE("PathParser - Host file system", "[core][file_sys]") {
     std::string test_dir = "./test";
-    FileUtil::CreateDir(test_dir);
-    FileUtil::CreateDir(test_dir + "/z");
-    FileUtil::CreateEmptyFile(test_dir + "/a");
+    Common::FS::CreateDir(test_dir);
+    Common::FS::CreateDir(test_dir + "/z");
+    Common::FS::CreateEmptyFile(test_dir + "/a");
 
     REQUIRE(PathParser(Path("/a")).GetHostStatus(test_dir) == PathParser::FileFound);
     REQUIRE(PathParser(Path("/b")).GetHostStatus(test_dir) == PathParser::NotFound);
@@ -32,7 +32,7 @@ TEST_CASE("PathParser - Host file system", "[core][file_sys]") {
     REQUIRE(PathParser(Path("/a/c")).GetHostStatus(test_dir) == PathParser::FileInPath);
     REQUIRE(PathParser(Path("/b/c")).GetHostStatus(test_dir) == PathParser::PathNotFound);
 
-    FileUtil::DeleteDirRecursively(test_dir);
+    Common::FS::DeleteDirRecursively(test_dir);
 }
 
 } // namespace FileSys
