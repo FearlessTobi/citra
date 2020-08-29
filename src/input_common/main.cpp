@@ -90,8 +90,10 @@ Common::ParamPackage GetSDLControllerAnalogBindByGUID(const std::string& guid, i
 }
 
 void ReloadInputDevices() {
-    if (udp)
-        udp->ReloadUDPClient();
+    if (!udp) {
+        return;
+    }
+    udp->ReloadUDPClient();
 }
 
 namespace Polling {

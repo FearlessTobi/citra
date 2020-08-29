@@ -24,11 +24,11 @@ class CalibrationConfigurationDialog : public QDialog {
 public:
     explicit CalibrationConfigurationDialog(QWidget* parent, const std::string& host, u16 port,
                                             u8 pad_index, u16 client_id);
-    ~CalibrationConfigurationDialog();
+    ~CalibrationConfigurationDialog() override;
 
 private:
-    Q_INVOKABLE void UpdateLabelText(QString text);
-    Q_INVOKABLE void UpdateButtonText(QString text);
+    Q_INVOKABLE void UpdateLabelText(const QString& text);
+    Q_INVOKABLE void UpdateButtonText(const QString& text);
 
     QVBoxLayout* layout;
     QLabel* status_label;
@@ -37,7 +37,10 @@ private:
 
     // Configuration results
     bool completed{};
-    u16 min_x, min_y, max_x, max_y;
+    u16 min_x{};
+    u16 min_y{};
+    u16 max_x{};
+    u16 max_y{};
 
     friend class ConfigureMotionTouch;
 };
@@ -68,7 +71,10 @@ private:
     std::unique_ptr<Ui::ConfigureMotionTouch> ui;
 
     // Coordinate system of the CemuhookUDP touch provider
-    int min_x, min_y, max_x, max_y;
+    int min_x{};
+    int min_y{};
+    int max_x{};
+    int max_y{};
 
     bool udp_test_in_progress{};
 
