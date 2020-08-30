@@ -1,5 +1,7 @@
 # CMake 3.12.4 required for 20 to be a valid value for CXX_STANDARD
 cmake_minimum_required(VERSION 3.15)
+# Add MSVC runtime library selection flags automatically:
+cmake_policy(SET CMP0091 OLD)
 # Don't override the warning flags in MSVC:
 cmake_policy(SET CMP0092 NEW)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules")
