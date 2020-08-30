@@ -66,6 +66,7 @@ add_library(common STATIC
     common_funcs.h
     common_paths.h
     common_types.h
+    concepts.h
     construct.h
     file_util.cpp
     file_util.h

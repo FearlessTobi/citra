@@ -58,6 +58,7 @@ else()
     add_compile_options(
         -Wall
         -Wno-attributes
+        -fconcepts
     )
 
     if (APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL Clang)
