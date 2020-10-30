@@ -252,7 +252,6 @@ const char* GetLogClassName(Class log_class) {
     case Class::Count:
         break;
     }
-    UNREACHABLE();
     return "Invalid";
 }
 
@@ -271,7 +270,6 @@ const char* GetLevelName(Level log_level) {
         break;
     }
 #undef LVL
-    UNREACHABLE();
     return "Invalid";
 }
 
