@@ -147,3 +147,21 @@ target_link_libraries(video_core PRIVATE glad nihstro-headers Boost::serializati
 if (ARCHITECTURE_x86_64)
     target_link_libraries(video_core PUBLIC xbyak)
 endif()
+
+if (MSVC)
+    target_compile_options(video_core PRIVATE /we4267)
+else()
+    target_compile_options(video_core PRIVATE
+        -Werror=conversion
+        -Wno-error=sign-conversion
+        -Werror=pessimizing-move
+        -Werror=redundant-move
+        -Werror=switch
+        -Werror=type-limits
+        -Werror=unused-variable
+
+        $<$<CXX_COMPILER_ID:GNU>:-Werror=class-memaccess>
+        $<$<CXX_COMPILER_ID:GNU>:-Werror=unused-but-set-parameter>
+        $<$<CXX_COMPILER_ID:GNU>:-Werror=unused-but-set-variable>
+    )
+endif()
