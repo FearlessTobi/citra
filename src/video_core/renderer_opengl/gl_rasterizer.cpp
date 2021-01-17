@@ -747,6 +747,8 @@ bool RasterizerOpenGL::Draw(bool accelerate, bool is_indexed) {
                     texture_cube_sampler.SyncWithConfig(texture.config);
                     state.texture_units[texture_index].texture_2d = 0;
                     continue; // Texture unit 0 setup finished. Continue to next unit
+                default:
+                    break;
                 }
                 state.texture_cube_unit.texture_cube = 0;
             }

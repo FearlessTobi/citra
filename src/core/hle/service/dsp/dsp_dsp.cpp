@@ -95,6 +95,8 @@ void DSP_DSP::WriteProcessPipe(Kernel::HLERequestContext& ctx) {
         buffer[6] = 0;
         buffer[7] = 0;
         break;
+    default:
+        break;
     }
 
     system.DSP().PipeWrite(pipe, buffer);

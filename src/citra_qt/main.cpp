@@ -149,8 +149,8 @@ static void InitializeLogging() {
 }
 
 GMainWindow::GMainWindow()
-    : config(std::make_unique<Config>()), emu_thread(nullptr),
-      ui(std::make_unique<Ui::MainWindow>()) {
+    : ui(std::make_unique<Ui::MainWindow>()), config(std::make_unique<Config>()),
+      emu_thread(nullptr) {
     InitializeLogging();
     Debugger::ToggleConsole();
     Settings::LogSettings();
@@ -1496,6 +1496,8 @@ void GMainWindow::OnCIAInstallReport(Service::AM::InstallStatus status, QString 
                               tr("%1 must be decrypted "
                                  "before being used with Citra. A real 3DS is required.")
                                   .arg(filename));
+        break;
+    default:
         break;
     }
 }
